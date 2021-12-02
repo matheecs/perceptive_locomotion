@@ -5,22 +5,21 @@
 #ifndef STAIR_MODELING_VIEWER_ADD_TEXT_H
 #define STAIR_MODELING_VIEWER_ADD_TEXT_H
 
-
-#include <pcl/visualization/common/common.h>
 #include <pcl/conversions.h>
-#include <vtkVersion.h>
+#include <pcl/visualization/common/common.h>
+#include <vtkCellData.h>
+#include <vtkDataSetMapper.h>
+#include <vtkLoopSubdivisionFilter.h>
+#include <vtkMapper.h>
+#include <vtkPlatonicSolidSource.h>
+#include <vtkPolyDataNormals.h>
+#include <vtkPropPicker.h>
 #include <vtkTextActor.h>
 #include <vtkTextProperty.h>
-#include <vtkCellData.h>
-#include <vtkWorldPointPicker.h>
-#include <vtkPropPicker.h>
-#include <vtkPlatonicSolidSource.h>
-#include <vtkLoopSubdivisionFilter.h>
-#include <vtkTriangle.h>
 #include <vtkTransform.h>
-#include <vtkPolyDataNormals.h>
-#include <vtkMapper.h>
-#include <vtkDataSetMapper.h>
+#include <vtkTriangle.h>
+#include <vtkVersion.h>
+#include <vtkWorldPointPicker.h>
 
 #if VTK_MAJOR_VERSION >= 6 || (VTK_MAJOR_VERSION == 5 && VTK_MINOR_VERSION > 4)
 
@@ -31,11 +30,10 @@
 #include <vtkVisibleCellSelector.h>
 #endif
 
-#include <vtkSelection.h>
-#include <vtkPointPicker.h>
-
 #include <pcl/visualization/boost.h>
 #include <pcl/visualization/vtk/vtkRenderWindowInteractorFix.h>
+#include <vtkPointPicker.h>
+#include <vtkSelection.h>
 
 #if VTK_RENDERING_BACKEND_OPENGL_VERSION < 2
 
@@ -43,41 +41,41 @@
 
 #endif
 
-#include <vtkPolyLine.h>
+#include <vtkAppendPolyData.h>
+#include <vtkAreaPicker.h>
+#include <vtkAxes.h>
+#include <vtkAxesActor.h>
+#include <vtkBMPReader.h>
+#include <vtkCamera.h>
+#include <vtkJPEGReader.h>
+#include <vtkLookupTable.h>
+#include <vtkOpenGLRenderWindow.h>
+#include <vtkOrientationMarkerWidget.h>
+#include <vtkPLYReader.h>
+#include <vtkPNGReader.h>
+#include <vtkPNMReader.h>
+#include <vtkPointData.h>
 #include <vtkPolyDataMapper.h>
+#include <vtkPolyLine.h>
+#include <vtkProperty.h>
 #include <vtkRenderWindow.h>
+#include <vtkRenderWindowInteractor.h>
 #include <vtkRenderer.h>
 #include <vtkRendererCollection.h>
-#include <vtkCamera.h>
-#include <vtkAppendPolyData.h>
-#include <vtkPointData.h>
-#include <vtkTransformFilter.h>
-#include <vtkProperty.h>
-#include <vtkPLYReader.h>
-#include <vtkAxes.h>
-#include <vtkTubeFilter.h>
-#include <vtkOrientationMarkerWidget.h>
-#include <vtkAxesActor.h>
-#include <vtkRenderWindowInteractor.h>
-#include <vtkAreaPicker.h>
-#include <vtkXYPlotActor.h>
-#include <vtkOpenGLRenderWindow.h>
-#include <vtkJPEGReader.h>
-#include <vtkBMPReader.h>
-#include <vtkPNMReader.h>
-#include <vtkPNGReader.h>
 #include <vtkTIFFReader.h>
-#include <vtkLookupTable.h>
 #include <vtkTextureUnitManager.h>
+#include <vtkTransformFilter.h>
+#include <vtkTubeFilter.h>
+#include <vtkXYPlotActor.h>
 
 #if VTK_MAJOR_VERSION > 7
 #include <vtkTexture.h>
 #endif
 
+#include <pcl/common/time.h>
+#include <pcl/visualization/common/common.h>
 #include <pcl/visualization/common/shapes.h>
 #include <pcl/visualization/pcl_visualizer.h>
-#include <pcl/visualization/common/common.h>
-#include <pcl/common/time.h>
 
 #if (BOOST_VERSION >= 106600)
 #include <boost/uuid/detail/sha1.hpp>
@@ -87,8 +85,9 @@
 
 #endif
 
-#include <boost/filesystem.hpp>
 #include <pcl/console/parse.h>
+
+#include <boost/filesystem.hpp>
 
 // Support for VTK 7.1 upwards
 #ifdef vtkGenericDataArray_h
@@ -99,25 +98,19 @@
 
 #include <string>
 
-enum MyJustification
-{
-    up_left = 0,
-    up_right,
-    down_left,
-    down_right
-};
+enum MyJustification { up_left = 0, up_right, down_left, down_right };
 
-enum PolygonShowMode
-{
-    polygon_line_mode = 0,
-    polygon_surface_mode
-};
+enum PolygonShowMode { polygon_line_mode = 0, polygon_surface_mode };
 
-bool myaddText(pcl::visualization::PCLVisualizer &viewer, const std::string &text,MyJustification justification,
-          int xpos, int ypos, int fontsize, double r, double g, double b, const std::string &id, int viewport = 0);
+bool myaddText(pcl::visualization::PCLVisualizer &viewer,
+               const std::string &text, MyJustification justification, int xpos,
+               int ypos, int fontsize, double r, double g, double b,
+               const std::string &id, int viewport = 0);
 
-bool myaddPolygon(pcl::visualization::PCLVisualizer &viewer,
-                                            const typename pcl::PointCloud<pcl::PointXYZ>::ConstPtr &cloud,PolygonShowMode polygonShowMode1,
-                                            double r, double g, double b, const std::string &id, int viewport = 0);
+bool myaddPolygon(
+    pcl::visualization::PCLVisualizer &viewer,
+    const typename pcl::PointCloud<pcl::PointXYZ>::ConstPtr &cloud,
+    PolygonShowMode polygonShowMode1, double r, double g, double b,
+    const std::string &id, int viewport = 0);
 
-#endif //STAIR_MODELING_VIEWER_ADD_TEXT_H
+#endif  // STAIR_MODELING_VIEWER_ADD_TEXT_H

@@ -34,8 +34,8 @@
 
 namespace ahc {
 #ifndef USE_BOOST_SHARED_PTR
-	using std::shared_ptr;
+using std::shared_ptr;
 #else
-	using boost::shared_ptr;
+using boost::shared_ptr;
 #endif
-}
+}  // namespace ahc
