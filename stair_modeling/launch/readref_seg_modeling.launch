@@ -1,0 +1,15 @@
+<launch>
+
+    <node pkg="stairwaydetection_ref" type="read_seg_pub" name="stairway_detection" output="screen">
+        <param name="file_path" value="/home/zxm/documents/stair/Reference Method/StairwayDetection/examples/25_Depth.pcd" />
+    </node>
+
+
+    <node pkg="stair_modeling" type="stair_modeling_node" name="stair_modeling" output="screen">
+        <remap from="/stair_modeling/vec_planes" to="/stairway_detection/vec_planes"/>
+    </node>
+
+    <!--参数配置-->
+    <node pkg="rqt_reconfigure" type="rqt_reconfigure" name="param_setting" />
+
+</launch>

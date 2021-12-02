@@ -1,0 +1,43 @@
+<launch>
+
+
+    <arg name="base_name" default="buxx"/>
+    <arg name="machine" default="localhost"/>
+    <arg name="nodelet_manager" default="$(arg base_name)"/>
+    <arg name="start_manager" default="true"/>
+    <arg name="use_machine" default="true"/>
+    <arg name="respawn" default="true"/>
+    <arg name="use_nodelet" default="true"/>
+    <arg name="output" default="screen"/>
+
+    <machine name="localhost" address="localhost" if="$(arg use_machine)"/>
+
+    <node pkg="nodelet" type="nodelet" name="$(arg nodelet_manager)" args="manager"
+          if="$(arg start_manager)" machine="$(arg machine)" output="screen"/>
+
+    <!--plane segmentation-->
+    <node pkg="nodelet" type="nodelet" name="$(arg base_name)_pcl_seg" machine="$(arg machine)"
+          args="load pcl_seg $(arg nodelet_manager)" respawn="$(arg respawn)">
+        <param name="show_seg_viewer" type="bool" value="false" />
+        <remap from="$(arg base_name)_pcl_seg/cloud_in" to="peac_cloud_rotation/cloud_xyzrgba"/>
+    </node>
+
+    <!--plane segmentation node version-->
+    <!--<node pkg="peac" type="peac_ros_node" name="$(arg base_name)_plane_seg" machine="$(arg machine)" output="screen">-->
+    <!--<remap from="$(arg base_name)_plane_seg/cloud_in"   to="$(arg base_name)_cloud_rotation/cloud_xyzrgba"/>-->
+    <!--</node>-->
+
+
+    <node pkg="nodelet" type="nodelet" name="$(arg base_name)_stair_modeling" machine="$(arg machine)"
+          args="load peac/stair_modeling $(arg nodelet_manager)" respawn="$(arg respawn)">
+        <remap from="$(arg base_name)_stair_modeling/vec_planes" to="$(arg base_name)_pcl_seg/vec_planes"/>
+    </node>
+
+    <!--<node pkg="stair_modeling" type="stair_modeling_node" name="$(arg base_name)_stair_modeling" machine="$(arg machine)" output="screen">-->
+    <!--<remap from="peac_plane_seg/vec_planes" to="$(arg base_name)_peac/vec_planes"/>-->
+    <!--</node>-->
+
+    <!--参数配置-->
+    <node pkg="rqt_reconfigure" type="rqt_reconfigure" name="param_setting" machine="$(arg machine)"/>
+
+</launch>

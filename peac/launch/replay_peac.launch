@@ -1,0 +1,12 @@
+<launch>
+
+    <node pkg="peac" type="peac_ros_node" name="peac_plane_seg" output="screen">
+        <param name="show_seg_viewer" type="bool" value="true" />
+        <remap from="/read_pub_cloud/reader_cloud" to="/peac_cloud_rotation/cloud_xyzrgba"/>
+    </node>
+
+    <node pkg="rqt_reconfigure" type="rqt_reconfigure" name="param_setting" />
+
+    <node pkg="image_view" type="image_view" name="image_view" args="image:=/peac_plane_seg/seg_image"/>
+
+</launch>

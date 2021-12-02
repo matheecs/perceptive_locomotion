@@ -1,0 +1,7 @@
+<library path="lib/libpeac_ros">
+    <class name="peac/seg" type="plane_fitter::peac_ros_nodelet" base_class_type="nodelet::Nodelet">
+        <description>
+            Segmatation planes.
+        </description>
+    </class>
+</library>

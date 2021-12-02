@@ -1,0 +1,20 @@
+<launch>
+
+    <node name="read_pub_cloud" pkg="read_pub_cloud" type="read_pub_cloud" output="screen">
+        <!--<param name="file_path" value="/home/zxm/documents/stair/Datasets/lab stair1/20180719" />-->
+        <param name="file_path" value="/home/zxm/documents/stair/Datasets/real stair/20180717full" />
+    </node>
+
+    <node pkg="peac" type="peac_ros_node" name="peac_plane_seg" output="screen">
+        <remap from="/peac_cloud_rotation/cloud_xyzrgba"   to="/read_pub_cloud/reader_cloud"/>
+    </node>
+
+    <node pkg="stair_modeling" type="stair_modeling_node" name="stair_modeling_node" output="screen">
+        <remap from="/stair_modeling_node/vec_planes"   to="/peac_plane_seg/vec_planes"/>
+    </node>
+
+    <node pkg="rqt_reconfigure" type="rqt_reconfigure" name="param_setting" />-->
+
+    <node pkg="image_view" type="image_view" name="image_view" args="image:=/peac_plane_seg/seg_image"/>
+
+</launch>

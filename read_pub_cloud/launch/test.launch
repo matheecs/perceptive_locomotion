@@ -1,0 +1,7 @@
+<launch>
+
+    <node name="read_pub_cloud" pkg="read_pub_cloud" type="read_pub_cloud" output="screen">
+        <param name="file_path" value="/home/zxm/documents/stair/Datasets/lab stair1/20180413" />
+    </node>
+
+</launch>
