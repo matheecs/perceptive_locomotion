@@ -213,23 +213,17 @@ void StairDetection::markHVType(std::vector<Plane> &vector_plane) {
                                  i.coefficients.values[2]);
 
     double angle = acos(plane_normal.dot(down_direction));
-
-    cout << "angle = " << angle << endl;
-
     // horizontal plane
     if ((angle < angle_h) || (M_PI - angle < angle_h)) {
       i.type = Plane::horizontal;
-      cout << "---" << endl;
     }
     // vertical plane
     else if (fabs(angle - M_PI / 2) < M_PI / 2 - angle_v) {
       i.type = Plane::vertical;
-      cout << "||" << endl;
     }
     // slope plane
     else {
       i.type = Plane::slope;
-      cout << "/\\" << endl;
     }
   }
 }
