@@ -219,10 +219,11 @@ class StairModeling {
   void convertCloud(const plane_msg::VecPlane &vec_plane,
                     std::vector<stair_perception::Plane> &vsp_plane) {
     unsigned long plane_number = vec_plane.vecPlane.size();
+    cout << "plane_number: " << plane_number << endl;
     vsp_plane.resize(plane_number);
 
-    omp_set_num_threads(4);
-#pragma omp parallel for
+    // omp_set_num_threads(4);
+// #pragma omp parallel for
     for (size_t i = 0; i < plane_number; i++) {
       pcl::fromROSMsg(vec_plane.vecPlane[i].cloud, vsp_plane[i].cloud);
 
@@ -908,8 +909,7 @@ class StairModelingNodelet : public nodelet::Nodelet {
   StairModeling *pstair_modeling;
 };
 
-PLUGINLIB_DECLARE_CLASS(StairModeling, StairModelingNodelet,
-                        StairModelingNodelet, nodelet::Nodelet);
+PLUGINLIB_EXPORT_CLASS(StairModelingNodelet, nodelet::Nodelet);
 
 int main(int argc, char **argv) {
   ros::init(argc, argv, "stair_modeling");

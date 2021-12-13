@@ -136,9 +136,9 @@ class StairDetection {
   std::string getEstimatedParamStringRcd(Stair &stair);
 
   StairDetection()
-      : down_direction(Eigen::Vector3f(1, 0, 0)),
-        right_direction(Eigen::Vector3f(0, 0, 1)),
-        forward_diretion(Eigen::Vector3f(0, 1, 0)),
+      : down_direction(Eigen::Vector3f(0, 0, -1)),
+        right_direction(Eigen::Vector3f(0, -1, 0)),
+        forward_diretion(Eigen::Vector3f(1, 0, 0)),
         down_sample_points_number(200),
         angle_h(pcl::deg2rad(10.0)),
         angle_v(pcl::deg2rad(70.0)),
