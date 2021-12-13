@@ -3,7 +3,7 @@ project(stair_modeling)
 
 # Compile as C++11, supported in ROS Kinetic and newer
 set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g -Wall")
 set(CMAKE_BUILD_TYPE "RELEASE")
 # add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
 
@@ -24,16 +24,12 @@ find_package(
 # REQUIRED COMPONENTS system)
 find_package(PCL 1.2 REQUIRED)
 
-# find_package(OpenMP REQUIRED)
-# if(OPENMP_FOUND)
-#   message("OPENMP FOUND")
-#   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-#   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-#   set(CMAKE_EXE_LINKER_FLAGS
-#       "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
-# endif()
-# Uncomment this if the package has a setup.py. This macro ensures modules and
-# global scripts declared therein get installed See
+# find_package(OpenMP REQUIRED) if(OPENMP_FOUND) message("OPENMP FOUND")
+# set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}") set(CMAKE_CXX_FLAGS
+# "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}") set(CMAKE_EXE_LINKER_FLAGS
+# "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+# endif() Uncomment this if the package has a setup.py. This macro ensures
+# modules and global scripts declared therein get installed See
 # http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
 # catkin_python_setup()
 
@@ -119,12 +115,11 @@ include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
-# add_library(
-#   stair_modeling_nodelet src/stair_modeling.cpp src/StairPerception.cpp
-#                          src/viewer_custom_func.cpp)
+# add_library( stair_modeling_nodelet src/stair_modeling.cpp
+# src/StairPerception.cpp src/viewer_custom_func.cpp)
 # target_link_libraries(stair_modeling_nodelet ${PCL_LIBRARIES}
-#                       ${catkin_LIBRARIES})
-# add_dependencies(stair_modeling_nodelet ${PROJECT_NAME}_gencfg)
+# ${catkin_LIBRARIES}) add_dependencies(stair_modeling_nodelet
+# ${PROJECT_NAME}_gencfg)
 
 add_executable(
   stair_modeling_node src/stair_modeling.cpp src/StairPerception.cpp

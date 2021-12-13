@@ -12,6 +12,7 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <stair_modeling/stair_modeling_paramConfig.h>
 
+#include <backward.hpp>
 #include <chrono>
 #include <mutex>
 #include <thread>
@@ -21,6 +22,9 @@
 #include "stair_info_msg/stair_info.h"
 #include "stair_modeling/StairPerception.hpp"
 #include "stair_modeling/viewer_custom_func.h"
+namespace backward {
+backward::SignalHandling sh;
+}
 
 using namespace std;
 using namespace std::chrono;
@@ -223,7 +227,7 @@ class StairModeling {
     vsp_plane.resize(plane_number);
 
     // omp_set_num_threads(4);
-// #pragma omp parallel for
+    // #pragma omp parallel for
     for (size_t i = 0; i < plane_number; i++) {
       pcl::fromROSMsg(vec_plane.vecPlane[i].cloud, vsp_plane[i].cloud);
 
