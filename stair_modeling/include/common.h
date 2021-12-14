@@ -8,8 +8,6 @@
 #ifndef COMMON_H_
 #define COMMON_H_
 
-// #include <omp.h>
-
 #include <pcl/common/common_headers.h>
 #include <pcl/common/time.h>
 #include <pcl/console/time.h>

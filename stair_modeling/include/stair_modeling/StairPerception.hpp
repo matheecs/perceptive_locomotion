@@ -204,11 +204,7 @@ class StairDetection {
 
   void setStair_cv_angle_diff_th(float stair_cv_angle_diff_th);
 
-  ~StairDetection() {
-#ifdef TIME_RECORD
-    ofile.close();
-#endif
-  }
+  ~StairDetection() {}
 
  private:
   void clearStatus();
