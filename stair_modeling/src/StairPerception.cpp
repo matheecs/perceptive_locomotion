@@ -18,7 +18,6 @@ double tic_toc_ms() {
   return duration.count() / 1000.0;
 }
 
-//#define DEBUG_STAIR_MODEL
 namespace stair_perception {
 bool StairDetection::process(std::vector<Plane> &vector_plane, Stair &stair,
                              KeyInfo &keyInfo, std::vector<double> &vectime) {
@@ -271,14 +270,6 @@ void StairDetection::removeVerticalPoleSlopePlanes(
  */
 void StairDetection::sortPlanesByHeight(std::vector<Plane> &vector_plane) {
   // this is very slow, due to heavey copy of data
-  /*std::sort(vector_plane.begin(), vector_plane.end(),
-            [&](Plane pa, Plane pb)
-            {
-                Eigen::Vector3f diff_center(pa.center.x - pb.center.x,
-                                            pa.center.y - pb.center.y,
-                                            pa.center.z - pb.center.z);
-                return diff_center.dot(down_direction) > 0;
-            });*/
 
   struct IndexCenter {
     int index;
@@ -1331,36 +1322,6 @@ void StairDetection::computeStairSidePlane(std::vector<Plane> &vector_plane,
     }
   }
 
-  /*sort(vec_right_intercepts.begin(), vec_right_intercepts.end(),
-       [&](float a, float b)
-       {
-           return fabs(a) > fabs(b);
-       });
-
-  sort(vec_left_intercepts.begin(), vec_left_intercepts.end(),
-       [&](float a, float b)
-       {
-           return fabs(a) > fabs(b);
-       });
-
-  keyInfo.side_plane_left.values.resize(4);
-  keyInfo.side_plane_left.values[0] =
-  keyInfo.horizontal_plane_direction.normal[0];
-  keyInfo.side_plane_left.values[1] =
-  keyInfo.horizontal_plane_direction.normal[1];
-  keyInfo.side_plane_left.values[2] =
-  keyInfo.horizontal_plane_direction.normal[2];
-  keyInfo.side_plane_left.values[3] = vec_left_intercepts[0];
-
-  keyInfo.side_plane_right.values.resize(4);
-  keyInfo.side_plane_right.values[0] =
-  keyInfo.horizontal_plane_direction.normal[0];
-  keyInfo.side_plane_right.values[1] =
-  keyInfo.horizontal_plane_direction.normal[1];
-  keyInfo.side_plane_right.values[2] =
-  keyInfo.horizontal_plane_direction.normal[2];
-  keyInfo.side_plane_right.values[3] = vec_right_intercepts[0];*/
-
   struct InterceptCount {
     float intercept;
     int count;
@@ -1635,18 +1596,6 @@ bool StairDetection::modelingStair(std::vector<Plane> &vector_plane,
       p_concaveline->concave_line.line = line;
 
       if (prev_step) {
-        //                    PointType &prev_center =
-        //                    prev_step->step.plane_v->center; PointType
-        //                    &now_center =
-        //                    p_concaveline->concave_line.plane_v->center;
-        //
-        //                    Eigen::Vector3f diff(now_center.x - prev_center.x,
-        //                                         now_center.y - prev_center.y,
-        //                                         now_center.z -
-        //                                         prev_center.z);
-        //
-        //                    prev_step->step.depth =
-        //                    fabs(diff.dot(keyInfo.main_vertical_plane_normal.normal));
         prev_step->step.depth = fabs(line.d - prev_step->step.line.d);
         prev_step->step.good_d = true;
       }
@@ -1675,19 +1624,6 @@ bool StairDetection::modelingStair(std::vector<Plane> &vector_plane,
       p_step->step.count = ++count;
 
       if (prev_concave_line) {
-        //                    PointType &prev_center =
-        //                    prev_concave_line->concave_line.plane_h->center;
-        //                    PointType &now_center =
-        //                    p_step->step.plane_h->center;
-        //
-        //                    Eigen::Vector3f diff(now_center.x - prev_center.x,
-        //                                         now_center.y - prev_center.y,
-        //                                         now_center.z -
-        //                                         prev_center.z);
-        //
-        //                    p_step->step.height =
-        //                    fabs(diff.dot(down_direction));
-
         p_step->step.height =
             fabs(line.h - prev_concave_line->concave_line.line.h);
       } else {
@@ -1697,12 +1633,6 @@ bool StairDetection::modelingStair(std::vector<Plane> &vector_plane,
                             point_max, min_p, max_p);
         p_step->step.height = fabs(point_max.x - line.h);
         p_step->step.good_h = false;
-        //                    Eigen::Vector3f diff(point_min.x - point_max.x,
-        //                                         point_min.y - point_max.y,
-        //                                         point_min.z - point_max.z);
-        //
-        //                    p_step->step.height =
-        //                    fabs(diff.dot(down_direction));
       }
 
       stair.pushBack(p_step);
@@ -1774,18 +1704,6 @@ bool StairDetection::modelingStair(std::vector<Plane> &vector_plane,
       p_concaveline->concave_line.line = line1;
 
       if (prev_step) {
-        //                    PointType &prev_center =
-        //                    prev_step->step.plane_v->center; PointType
-        //                    &now_center =
-        //                    p_concaveline->concave_line.plane_v->center;
-        //
-        //                    Eigen::Vector3f diff(now_center.x - prev_center.x,
-        //                                         now_center.y - prev_center.y,
-        //                                         now_center.z -
-        //                                         prev_center.z);
-        //
-        //                    prev_step->step.depth =
-        //                    fabs(diff.dot(keyInfo.main_vertical_plane_normal.normal));
         prev_step->step.depth = fabs(line1.d - prev_step->step.line.d);
         prev_step->step.good_d = true;
       }
@@ -1809,18 +1727,6 @@ bool StairDetection::modelingStair(std::vector<Plane> &vector_plane,
       p_step->step.count = ++count;
 
       if (prev_concave_line) {
-        //                    PointType &prev_center =
-        //                    prev_concave_line->concave_line.plane_h->center;
-        //                    PointType &now_center =
-        //                    p_step->step.plane_h->center;
-        //
-        //                    Eigen::Vector3f diff(now_center.x - prev_center.x,
-        //                                         now_center.y - prev_center.y,
-        //                                         now_center.z -
-        //                                         prev_center.z);
-        //
-        //                    p_step->step.height =
-        //                    fabs(diff.dot(down_direction));
         p_step->step.height =
             fabs(line2.h - prev_concave_line->concave_line.line.h);
         p_step->step.good_h = true;
@@ -1849,10 +1755,9 @@ inline void StairDetection::findMinMaxProjPoint(
   max_proj = -FLT_MAX, min_proj = FLT_MAX;
   for (size_t i = 0; i < plane.random_down_sample_cloud.points.size(); i++) {
     pcl::PointXYZ center = plane.center;
-    Eigen::Vector3f vp(
-        plane.random_down_sample_cloud.points[i].x /* - center.x*/,
-        plane.random_down_sample_cloud.points[i].y /* - center.y*/,
-        plane.random_down_sample_cloud.points[i].z /* - center.z*/);
+    Eigen::Vector3f vp(plane.random_down_sample_cloud.points[i].x,
+                       plane.random_down_sample_cloud.points[i].y,
+                       plane.random_down_sample_cloud.points[i].z);
     float proj = ve.dot(vp);
     if (proj > max_proj) {
       max_proj = proj;
@@ -1870,53 +1775,6 @@ inline void StairDetection::findMinMaxProjPoint(
 }
 
 std::string StairDetection::getDetialStairModelString(Stair &stair) {
-  //        std::string str;
-  //
-  //        str = "Stair Model:\n";
-  //
-  //        std::shared_ptr<Node> pnext;
-  //        stair.reset();
-  //        while (stair.readNext(pnext))
-  //        {
-  //            if (pnext->pcurrent_type == PartType::step_node)
-  //            {
-  //                std::shared_ptr<Node> &pstep = pnext;
-  //                str = str + "\n";
-  //                str = str + "[STEP" + std::to_string(pstep->step.count) +
-  //                "]:\n"; str = str + "    point cloud vertical" + "\n"; str =
-  //                str + "        points number: " +
-  //                std::to_string(pstep->step.plane_v->cloud.points.size()) +
-  //                "\n"; str = str + "        height: " +
-  //                std::to_string(pstep->step.height) + "\n"; str = str + "
-  //                point cloud horizontal" + "\n"; str = str + "        points
-  //                number: " +
-  //                std::to_string(pstep->step.plane_h->cloud.points.size()) +
-  //                "\n"; str = str + "        depth:  " +
-  //                std::to_string(pstep->step.depth) + "\n"; str = str + "
-  //                convex line: " + "\n"; str = str + "        " + "coeff: ";
-  //                for (float value : pstep->step.line.coeff.values)
-  //                    str = str + std::to_string(value) + "   ";
-  //                str = str + "\n" + "        h:" +
-  //                std::to_string(pstep->step.line.h); str = str + "\n" + " d:"
-  //                + std::to_string(pstep->step.line.d); str = str + "\n";
-  //            } else if (pnext->pcurrent_type == PartType::concaveline_node)
-  //            {
-  //                std::shared_ptr<Node> &pline = pnext;
-  //                str = str + "\n";
-  //                str = str + "[CONCAVE LINE]: " + "\n";
-  //                str = str + "        " + "coeff: ";
-  //                for (float value : pline->concave_line.line.coeff.values)
-  //                    str = str + std::to_string(value) + "   ";
-  //                str = str + "\n" + "        h: " +
-  //                std::to_string(pline->concave_line.line.h); str = str + "\n"
-  //                + "        d: " +
-  //                std::to_string(pline->concave_line.line.d); str = str +
-  //                "\n";
-  //            }
-  //        }
-  //
-  //        return str;
-
   std::stringstream oss;
   oss.setf(ios::fixed);
   oss.precision(4);
@@ -1933,22 +1791,17 @@ std::string StairDetection::getDetialStairModelString(Stair &stair) {
       oss << "    point cloud vertical" << std::endl;
       oss << "        points number: "
           << pstep->step.plane_v->cloud.points.size() << std::endl;
-      oss << "        height: " /*<< setprecision(4)*/ << pstep->step.height
-          << std::endl;
+      oss << "        height: " << pstep->step.height << std::endl;
       oss << "    point cloud horizontal" << std::endl;
       oss << "        points number: "
           << pstep->step.plane_h->cloud.points.size() << std::endl;
-      oss << "        depth:  " /*<< setprecision(4)*/ << pstep->step.depth
-          << std::endl;
+      oss << "        depth:  " << pstep->step.depth << std::endl;
       oss << "    convex line: " << std::endl;
       oss << "        "
           << "coeff: ";
-      for (float value : pstep->step.line.coeff.values)
-        oss /*<< setprecision(4)*/ << value << "   ";
-      oss << std::endl
-          << "        h:" /*<< setprecision(4)*/ << pstep->step.line.h;
-      oss << std::endl
-          << "        d:" /*<< setprecision(4)*/ << pstep->step.line.d;
+      for (float value : pstep->step.line.coeff.values) oss << value << "   ";
+      oss << std::endl << "        h:" << pstep->step.line.h;
+      oss << std::endl << "        d:" << pstep->step.line.d;
       oss << std::endl;
     } else if (pnext->pcurrent_type == PartType::concaveline_node) {
       std::shared_ptr<Node> &pline = pnext;
@@ -1958,10 +1811,8 @@ std::string StairDetection::getDetialStairModelString(Stair &stair) {
           << "coeff: ";
       for (float value : pline->concave_line.line.coeff.values)
         oss << value << "   ";
-      oss << std::endl
-          << "        h: " /*<< setprecision(4)*/ << pline->concave_line.line.h;
-      oss << std::endl
-          << "        d: " /*<< setprecision(4)*/ << pline->concave_line.line.d;
+      oss << std::endl << "        h: " << pline->concave_line.line.h;
+      oss << std::endl << "        d: " << pline->concave_line.line.d;
       oss << std::endl;
     }
   }
@@ -1971,35 +1822,6 @@ std::string StairDetection::getDetialStairModelString(Stair &stair) {
 }
 
 std::string StairDetection::getEstimatedParamString(Stair &stair) {
-  //        std::string str;
-  //
-  //        std::shared_ptr<Node> pnext;
-  //        stair.reset();
-  //
-  //        str = "Estimated Paramters:\n";
-  //        str = str + "Height    Depth    V_Distance  H_Distance" + "\n";
-  //        while (stair.readNext(pnext))
-  //        {
-  //            if (pnext->pcurrent_type == step_node)
-  //            {
-  //                std::shared_ptr<Node> &pstep = pnext;
-  //                str = str + std::to_string(pstep->step.height);
-  //                if (pstep->step.good_h)
-  //                    str = str + "g   ";
-  //                else
-  //                    str = str + "b   ";
-  //                str = str + std::to_string(pstep->step.depth);
-  //                if (pstep->step.good_d)
-  //                    str = str + "g   ";
-  //                else
-  //                    str = str + "b   ";
-  //                str = str + std::to_string(pstep->step.line.h) + "      " +
-  //                std::to_string(pstep->step.line.d) + "\n";
-  //            }
-  //        }
-  //
-  //        return str;
-
   std::stringstream oss;
   oss.setf(ios::fixed);
   oss.precision(4);
@@ -2012,24 +1834,21 @@ std::string StairDetection::getEstimatedParamString(Stair &stair) {
   while (stair.readNext(pnext)) {
     if (pnext->pcurrent_type == step_node) {
       std::shared_ptr<Node> &pstep = pnext;
-      oss /*<< setprecision(4)*/ << pstep->step.height;
+      oss << pstep->step.height;
       if (pstep->step.good_h)
         oss << "g   ";
       else
         oss << "b   ";
-      oss /*<< setprecision(4)*/ << pstep->step.depth;
+      oss << pstep->step.depth;
       if (pstep->step.good_d)
         oss << "g   ";
       else
         oss << "b   ";
-      oss /*<< setprecision(4)*/ << pstep->step.line.h
-                                 << "      "
-                                 /*<< setprecision(4)*/
-                                 << pstep->step.line.d << std::endl;
+      oss << pstep->step.line.h << "      "
+
+          << pstep->step.line.d << std::endl;
     } else if (pnext->pcurrent_type == concaveline_node) {
       std::shared_ptr<Node> &pline = pnext;
-      //                oss << pline->concave_line.line.h << "\t" <<
-      //                pline->concave_line.line.d << std::endl;
     }
   }
 
@@ -2054,20 +1873,15 @@ std::string StairDetection::getEstimatedParamStringRcd(Stair &stair) {
         first = false;
       else
         oss << ",";
-      oss /*<< setprecision(4)*/ << pstep->step.height
-                                 << ","
-                                 /*<< setprecision(4)*/
-                                 << pstep->step.depth
-                                 << ","
-                                 /*<< setprecision(4)*/
-                                 << pstep->step.line.h
-                                 << ","
-                                 /*<< setprecision(4)*/
-                                 << pstep->step.line.d << std::endl;
+      oss << pstep->step.height << ","
+
+          << pstep->step.depth << ","
+
+          << pstep->step.line.h << ","
+
+          << pstep->step.line.d << std::endl;
     } else if (pnext->pcurrent_type == concaveline_node) {
       std::shared_ptr<Node> &pline = pnext;
-      //                oss << pline->concave_line.line.h << "\t" <<
-      //                pline->concave_line.line.d << std::endl;
     }
   }
 

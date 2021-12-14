@@ -126,9 +126,6 @@ class StairDetection {
   bool process(std::vector<Plane> &vector_plane, Stair &stair, KeyInfo &keyInfo,
                std::vector<double> &vectime);
 
-  /** \brief print stair model
-   * \param[in] stair: stair model
-   */
   std::string getDetialStairModelString(Stair &stair);
 
   std::string getEstimatedParamString(Stair &stair);

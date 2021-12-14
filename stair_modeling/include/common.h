@@ -10,22 +10,17 @@
 
 // #include <omp.h>
 
-#include <fstream>
-#include <iostream>
-#include <sstream>
-#include <string>
-
-//#include <opencv2/opencv.hpp>
-//#include <opencv2/core/core.hpp>
-//#include <opencv2/highgui/highgui.hpp>
-//#include <opencv2/imgproc/imgproc.hpp>
-
 #include <pcl/common/common_headers.h>
 #include <pcl/common/time.h>
 #include <pcl/console/time.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/visualization/pcl_visualizer.h>
+
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <string>
 
 // the following are UBUNTU/LINUX ONLY terminal color codes.
 #define RESET "\033[0m"
@@ -194,17 +189,6 @@ struct Plane {
         curvature(0) {
     ptype = Ptype::pstair_component;
   }
-
-  /*        //merge two other Planes, only the basic plane properties are merged
-          struPlane(const struPlane& a, const struPlane& b) :
-                  sx(a.sx+b.sx), sy(a.sy+b.sy), sz(a.sz+b.sz),
-                  sxx(a.sxx+b.sxx), syy(a.syy+b.syy), szz(a.szz+b.szz),
-                  sxy(a.sxy+b.sxy), syz(a.syz+b.syz), sxz(a.sxz+b.sxz),
-     N(a.N+b.N)
-          {
-              this->cloud = a.cloud + b.cloud;
-              this->computePlaneInfo();
-          }*/
 
   Plane &operator+=(const Plane &other) {
     this->sx += other.sx;
