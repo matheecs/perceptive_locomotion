@@ -168,8 +168,8 @@ class StairModeling {
       auto t2 = system_clock::now();
       auto duration = duration_cast<microseconds>(t2 - t1);
       ROS_INFO("Convert cloud time: %.2f ms", duration.count() / 1000.0);
-      oss << "Convert cloud time: " /*<< setprecision(3)*/
-          << duration.count() / 1000.0 << " ms" << std::endl;
+      oss << "Convert cloud time: " << duration.count() / 1000.0 << " ms"
+          << std::endl;
 
       has_stair = stair_detector.process(vsp_plane, stair, keyInfo, vectime);
 
@@ -177,8 +177,8 @@ class StairModeling {
       duration = duration_cast<microseconds>(t3 - t2);
       ROS_INFO("Stair modeling time: %.2f ms",
                float(duration.count()) / 1000.0);
-      oss << "Stair modeling time: " /*<< setprecision(3)*/
-          << duration.count() / 1000.0 << " ms" << std::endl;
+      oss << "Stair modeling time: " << duration.count() / 1000.0 << " ms"
+          << std::endl;
 
       if (has_stair) {
         detial_stair_model = stair_detector.getDetialStairModelString(stair);
