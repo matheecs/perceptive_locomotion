@@ -1,10 +1,3 @@
-/*
- * Stair.hpp
- *
- *  Created on: 2017年10月6日
- *      Author: zxm
- */
-
 #ifndef STAIR_HPP_
 #define STAIR_HPP_
 

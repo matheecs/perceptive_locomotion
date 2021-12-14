@@ -1,10 +1,3 @@
-/*
- * common.h
- *
- *  Created on: 2017年10月6日
- *      Author: zxm
- */
-
 #ifndef COMMON_H_
 #define COMMON_H_
 

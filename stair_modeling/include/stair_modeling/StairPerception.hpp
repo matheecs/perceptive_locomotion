@@ -1,10 +1,3 @@
-/*
- * StairDetection.hpp
- *
- *  Created on: 2017年10月6日
- *      Author: zxm
- */
-
 #ifndef STAIRDETECTION_HPP_
 #define STAIRDETECTION_HPP_
 

@@ -1,6 +1,3 @@
-//
-// Created by zxm on 18-8-8.
-//
 #include <dynamic_reconfigure/server.h>
 #include <pcl/common/common.h>
 #include <pcl/point_cloud.h>
