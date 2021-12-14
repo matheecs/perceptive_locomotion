@@ -311,12 +311,6 @@ void StairDetection::sortPlanesByHeight(std::vector<Plane> &vector_plane) {
       }
     }
   }
-  //        ROS_INFO("\tvector_plane time: %.2f ms", tic_toc_ms());
-
-  //        std::vector<Plane> copy_vector_plane = vector_plane;
-
-  //        for (size_t i = 0; i < vec_index_centers.size(); i++)
-  //            vector_plane[i] = copy_vector_plane[vec_index_centers[i].index];
 }
 
 /*
@@ -926,12 +920,6 @@ bool StairDetection::refineKeyDirections(KeyInfo &keyInfo) {
       }
     }
 
-    //            ROS_INFO("11111111111111111111111111111");
-    //            keyInfo.main_vertical_plane_normal.normal[0]=0;
-    //            keyInfo.main_vertical_plane_normal.normal.normalize();
-    //            keyInfo.horizontal_plane_direction.normal[0]=0;
-    //            keyInfo.horizontal_plane_direction.normal.normalize();
-    //            ROS_INFO("22222222222222222222222222222");
     return true;
   }
 
@@ -1534,8 +1522,6 @@ bool StairDetection::modelingStair(std::vector<Plane> &vector_plane,
           p_step->step.plane_h = &vector_plane[index];
           p_step->step.line = line2;
           p_step->step.count = ++count;
-
-          //                        p_step->step.height = fabs(dot_product);
 
           p_step->step.height =
               fabs(p_step->step.line.h - p_concaveline->concave_line.line.h);
