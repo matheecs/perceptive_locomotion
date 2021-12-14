@@ -1,0 +1,14 @@
+{
+  "files.associations": {
+    "*.urdf": "xml",
+    "*.xml": "xml",
+    "*.cfg": "python",
+    "__hash_table": "cpp",
+    "__tree": "cpp",
+    "deque": "cpp",
+    "map": "cpp",
+    "string": "cpp",
+    "unordered_map": "cpp",
+    "vector": "cpp"
+  }
+}

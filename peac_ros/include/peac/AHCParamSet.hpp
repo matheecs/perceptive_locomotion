@@ -47,7 +47,7 @@ struct ParamSet {
   double depthSigma;   //\sigma in the paper, unit: u^-1 mm^-1
   double stdTol_init;  //\epsilon in the paper, used when init graph, unit: u mm
   double stdTol_merge;  //\epsilon in the paper, used when merging nodes, unit:
-                        //u mm
+                        // u mm
 
   // related to T_ang
   double z_near, z_far;  // unit: u mm, closest/farthest z to be considered
