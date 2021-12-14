@@ -27,11 +27,6 @@
 #include <pcl/point_types.h>
 #include <pcl/visualization/pcl_visualizer.h>
 
-#include <boost/algorithm/string.hpp>
-#include <boost/format.hpp>
-#include <boost/thread/thread.hpp>
-#include <boost/tokenizer.hpp>
-
 // the following are UBUNTU/LINUX ONLY terminal color codes.
 #define RESET "\033[0m"
 #define BLACK "\033[30m"              /* Black */

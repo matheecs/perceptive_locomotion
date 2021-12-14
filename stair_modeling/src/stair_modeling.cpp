@@ -2,7 +2,6 @@
 // Created by zxm on 18-8-8.
 //
 #include <dynamic_reconfigure/server.h>
-#include <nodelet/nodelet.h>
 #include <pcl/common/common.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -14,14 +13,12 @@
 
 #include <backward.hpp>
 #include <chrono>
-#include <mutex>
-#include <thread>
 
 #include "plane_msg/Plane.h"
 #include "plane_msg/VecPlane.h"
 #include "stair_info_msg/stair_info.h"
 #include "stair_modeling/StairPerception.hpp"
-#include "stair_modeling/viewer_custom_func.h"
+
 namespace backward {
 backward::SignalHandling sh;
 }
@@ -29,7 +26,7 @@ backward::SignalHandling sh;
 using namespace std;
 using namespace std::chrono;
 
-#define VIEWER_INFO_SHOW
+enum PolygonShowMode { polygon_line_mode = 0, polygon_surface_mode };
 
 class StairModeling {
  public:
@@ -59,10 +56,7 @@ class StairModeling {
         server(new dynamic_reconfigure::Server<
                stair_modeling::stair_modeling_paramConfig>(private_nh)) {}
 
-  ~StairModeling() {
-    running = false;
-    viz_thread.join();
-  }
+  ~StairModeling() { running = false; }
 
   void init() {
     ROS_INFO("############# StairModeling start #############");
@@ -106,8 +100,6 @@ class StairModeling {
                   << "h_dis"
                   << ","
                   << "v_dis" << endl;
-
-    viz_thread = thread(&StairModeling::rviz_loop, this);
   }
 
   void cfg_callback(stair_modeling::stair_modeling_paramConfig &config,
@@ -215,8 +207,6 @@ class StairModeling {
       time_record << std::endl;
 
       running_time_str = oss.str();
-
-      update_rviz_cloud(vsp_plane);
     }
   }
 
@@ -234,526 +224,6 @@ class StairModeling {
       vsp_plane[i].computeStatistics();
       vsp_plane[i].computePlaneInfo();
     }
-  }
-
-  void rviz_loop() {
-    viewer.reset(new pcl::visualization::PCLVisualizer("viewer"));
-    viewer->setPosition(0, 0);
-    viewer->initCameraParameters();
-    viewer->setBackgroundColor(1, 1, 1);
-    viewer->addCoordinateSystem(0.3);
-    viewer->setCameraPosition(-0.596784, -2.03596, 2.79617, -0.949447, 0.215143,
-                              -0.228612);
-    viewer->setPosition(100, 100);
-    viewer->setSize(780, 540);
-
-    while (running) {
-      //            ROS_INFO("rviz_loop in");
-
-      std::string viewr_cloud_name = "cloud_";
-
-      mutex_vsp.lock();
-      if (!vsp_plane_viz.empty()) {
-        viewer->removeAllPointClouds();
-        viewer->removeAllShapes();
-
-        srand(0);
-        for (unsigned int i = 0; i < vsp_plane_viz.size(); i++) {
-          if ((vsp_plane_viz)[i].ptype ==
-              stair_perception::Plane::Ptype::stair_component) {
-            double r, g, b;
-            r = int(255.0 * rand() / (RAND_MAX + 1.0));
-            g = int(255.0 * rand() / (RAND_MAX + 1.0));
-            b = int(255.0 * rand() / (RAND_MAX + 1.0));
-            pcl::visualization::PointCloudColorHandlerCustom<
-                stair_perception::PointType>
-                single_color((vsp_plane_viz)[i].cloud.makeShared(), r, g, b);
-
-            std::stringstream ss;
-
-            ss << viewr_cloud_name << i;
-
-            if (show_stair_cloud) {
-              if (vsp_plane_viz[i].cloud.points.size()) {
-                // add cloud
-                ss << "c";
-                viewer->addPointCloud<stair_perception::PointType>(
-                    (vsp_plane_viz)[i].cloud.makeShared(), single_color,
-                    ss.str());
-                viewer->setPointCloudRenderingProperties(
-                    pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, ss.str());
-              }
-            }
-
-            if (show_downsampled_cloud) {
-              if (vsp_plane_viz[i].random_down_sample_cloud.points.size()) {
-                ss << "c";
-                viewer->addPointCloud<stair_perception::PointType>(
-                    (vsp_plane_viz)[i].random_down_sample_cloud.makeShared(),
-                    single_color, ss.str());
-                viewer->setPointCloudRenderingProperties(
-                    pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, ss.str());
-              }
-            }
-
-            if (show_center) {
-              // add center
-              ss << "c";
-              viewer->addSphere((vsp_plane_viz)[i].center, 0.02, r / 255.0,
-                                g / 255.0, b / 255.0, ss.str());
-            }
-
-            if (show_plane_info) {
-              // add plane number (TODO: just for debug)
-              ss << "c";
-              std::stringstream nss;
-              nss << "P" << i;
-              if (vsp_plane_viz[i].type ==
-                  stair_perception::Plane::Type::horizontal)
-                nss << "-H";
-              else if (vsp_plane_viz[i].type ==
-                       stair_perception::Plane::Type::vertical)
-                nss << "-V";
-              else
-                nss << "-S";
-              nss << "-Stair";
-              viewer->addText3D(nss.str(), vsp_plane_viz[i].center, 0.02, 0, 0,
-                                0, ss.str());
-
-              // add plane normal (TODO: just for debug)
-              ss << "c";
-              pcl::PointXYZ start, end;
-              start = (vsp_plane_viz)[i].center;
-              end.x = (vsp_plane_viz)[i].center.x +
-                      0.1 * (vsp_plane_viz)[i].coefficients.values[0];
-              end.y = (vsp_plane_viz)[i].center.y +
-                      0.1 * (vsp_plane_viz)[i].coefficients.values[1];
-              end.z = (vsp_plane_viz)[i].center.z +
-                      0.1 * (vsp_plane_viz)[i].coefficients.values[2];
-              viewer->addLine<pcl::PointXYZ>(start, end, r / 255.0, g / 255.0,
-                                             b / 255.0, ss.str());
-
-              // add plane eigen vectors (TODO: just for debug)
-              ss << "c";
-              pcl::PointXYZ center, p1;
-              center = vsp_plane_viz[i].center;
-              p1.x = center.x + 0.01 * vsp_plane_viz[i].eigen_vectors[1].x *
-                                    sqrtf(vsp_plane_viz[i].eigen_values[1]);
-              p1.y = center.y + 0.01 * vsp_plane_viz[i].eigen_vectors[1].y *
-                                    sqrtf(vsp_plane_viz[i].eigen_values[1]);
-              p1.z = center.z + 0.01 * vsp_plane_viz[i].eigen_vectors[1].z *
-                                    sqrtf(vsp_plane_viz[i].eigen_values[1]);
-              viewer->addLine<pcl::PointXYZ>(center, p1, 0, 0, 0, ss.str());
-              ss << "c";
-              p1.x = center.x + 0.01 * vsp_plane_viz[i].eigen_vectors[2].x *
-                                    sqrtf(vsp_plane_viz[i].eigen_values[2]);
-              p1.y = center.y + 0.01 * vsp_plane_viz[i].eigen_vectors[2].y *
-                                    sqrtf(vsp_plane_viz[i].eigen_values[2]);
-              p1.z = center.z + 0.01 * vsp_plane_viz[i].eigen_vectors[2].z *
-                                    sqrtf(vsp_plane_viz[i].eigen_values[2]);
-              viewer->addLine<pcl::PointXYZ>(center, p1, 0, 0, 0, ss.str());
-            }
-
-            if (show_counter) {
-              // add counter
-              ss << "c";
-              //                            viewer->addPolygon<pcl::PointXYZ>((vsp_plane_viz)[i].counter.makeShared(),
-              //                            r / 255.0,
-              //                                                              g
-              //                                                              /
-              //                                                              255.0,
-              //                                                              b
-              //                                                              /
-              //                                                              255.0,
-              //                                                              ss.str());
-
-              myaddPolygon(*viewer, vsp_plane_viz[i].counter.makeShared(),
-                           polygonShowMode, r / 255.0, g / 255.0, b / 255.0,
-                           ss.str());
-            }
-
-          } else if ((vsp_plane_viz)[i].ptype ==
-                     stair_perception::Plane::Ptype::others) {
-            pcl::visualization::PointCloudColorHandlerCustom<
-                stair_perception::PointType>
-                single_color((vsp_plane_viz)[i].cloud.makeShared(), 255, 0, 0);
-
-            std::stringstream ss;
-
-            ss << viewr_cloud_name << i;
-
-            if (show_cloud) {
-              if (vsp_plane_viz[i].cloud.points.size()) {
-                // add cloud
-                ss << "c";
-                viewer->addPointCloud<stair_perception::PointType>(
-                    (vsp_plane_viz)[i].cloud.makeShared(), single_color,
-                    ss.str());
-                viewer->setPointCloudRenderingProperties(
-                    pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, ss.str());
-              }
-            }
-
-            if (show_downsampled_cloud) {
-              if (vsp_plane_viz[i].random_down_sample_cloud.points.size()) {
-                ss << "c";
-                viewer->addPointCloud<stair_perception::PointType>(
-                    (vsp_plane_viz)[i].random_down_sample_cloud.makeShared(),
-                    single_color, ss.str());
-                viewer->setPointCloudRenderingProperties(
-                    pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, ss.str());
-              }
-            }
-
-            if (show_plane_info) {
-              // add plane number (TODO: just for debug)
-              ss << "c";
-              std::stringstream nss;
-              nss << "P" << i;
-              if (vsp_plane_viz[i].type ==
-                  stair_perception::Plane::Type::horizontal)
-                nss << "-H";
-              else if (vsp_plane_viz[i].type ==
-                       stair_perception::Plane::Type::vertical)
-                nss << "-V";
-              else
-                nss << "-S";
-              nss << "-Others-" << vsp_plane_viz[i].info;
-              viewer->addText3D(nss.str(), vsp_plane_viz[i].center, 0.02, 0, 0,
-                                0, ss.str());
-
-              // add plane normal (TODO: just for debug)
-              ss << "c";
-              pcl::PointXYZ start, end;
-              start = (vsp_plane_viz)[i].center;
-              end.x = (vsp_plane_viz)[i].center.x +
-                      0.1 * (vsp_plane_viz)[i].coefficients.values[0];
-              end.y = (vsp_plane_viz)[i].center.y +
-                      0.1 * (vsp_plane_viz)[i].coefficients.values[1];
-              end.z = (vsp_plane_viz)[i].center.z +
-                      0.1 * (vsp_plane_viz)[i].coefficients.values[2];
-              viewer->addLine<pcl::PointXYZ>(start, end, 1, 0, 0, ss.str());
-
-              // add plane eigen vectors (TODO: just for debug)
-              ss << "c";
-              pcl::PointXYZ center, p1;
-              center = vsp_plane_viz[i].center;
-              p1.x = center.x + 0.01 * vsp_plane_viz[i].eigen_vectors[1].x *
-                                    sqrtf(vsp_plane_viz[i].eigen_values[1]);
-              p1.y = center.y + 0.01 * vsp_plane_viz[i].eigen_vectors[1].y *
-                                    sqrtf(vsp_plane_viz[i].eigen_values[1]);
-              p1.z = center.z + 0.01 * vsp_plane_viz[i].eigen_vectors[1].z *
-                                    sqrtf(vsp_plane_viz[i].eigen_values[1]);
-              viewer->addLine<pcl::PointXYZ>(center, p1, 0, 0, 0, ss.str());
-              ss << "c";
-              p1.x = center.x + 0.01 * vsp_plane_viz[i].eigen_vectors[2].x *
-                                    sqrtf(vsp_plane_viz[i].eigen_values[2]);
-              p1.y = center.y + 0.01 * vsp_plane_viz[i].eigen_vectors[2].y *
-                                    sqrtf(vsp_plane_viz[i].eigen_values[2]);
-              p1.z = center.z + 0.01 * vsp_plane_viz[i].eigen_vectors[2].z *
-                                    sqrtf(vsp_plane_viz[i].eigen_values[2]);
-              viewer->addLine<pcl::PointXYZ>(center, p1, 0, 0, 0, ss.str());
-            }
-
-          } else if ((vsp_plane_viz)[i].ptype ==
-                     stair_perception::Plane::Ptype::ground) {
-            pcl::visualization::PointCloudColorHandlerCustom<
-                stair_perception::PointType>
-                single_color((vsp_plane_viz)[i].cloud.makeShared(), 0, 255, 0);
-
-            std::stringstream ss;
-
-            ss << viewr_cloud_name << i;
-
-            if (show_cloud) {
-              if (vsp_plane_viz[i].cloud.points.size()) {
-                // add cloud
-                ss << "c";
-                viewer->addPointCloud<stair_perception::PointType>(
-                    (vsp_plane_viz)[i].cloud.makeShared(), single_color,
-                    ss.str());
-                viewer->setPointCloudRenderingProperties(
-                    pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, ss.str());
-              }
-            }
-
-            if (show_downsampled_cloud) {
-              if (vsp_plane_viz[i].random_down_sample_cloud.points.size()) {
-                ss << "c";
-                viewer->addPointCloud<stair_perception::PointType>(
-                    (vsp_plane_viz)[i].random_down_sample_cloud.makeShared(),
-                    single_color, ss.str());
-                viewer->setPointCloudRenderingProperties(
-                    pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, ss.str());
-              }
-            }
-
-            if (show_plane_info) {
-              // add plane number (TODO: just for debug)
-              ss << "c";
-              std::stringstream nss;
-              nss << "P" << i;
-              if (vsp_plane_viz[i].type ==
-                  stair_perception::Plane::Type::horizontal)
-                nss << "-H";
-              else if (vsp_plane_viz[i].type ==
-                       stair_perception::Plane::Type::vertical)
-                nss << "-V";
-              else
-                nss << "-S";
-              nss << "-Ground";
-              viewer->addText3D(nss.str(), vsp_plane_viz[i].center, 0.02, 0, 0,
-                                0, ss.str());
-
-              // add plane normal (TODO: just for debug)
-              ss << "c";
-              pcl::PointXYZ start, end;
-              start = (vsp_plane_viz)[i].center;
-              end.x = (vsp_plane_viz)[i].center.x +
-                      0.1 * (vsp_plane_viz)[i].coefficients.values[0];
-              end.y = (vsp_plane_viz)[i].center.y +
-                      0.1 * (vsp_plane_viz)[i].coefficients.values[1];
-              end.z = (vsp_plane_viz)[i].center.z +
-                      0.1 * (vsp_plane_viz)[i].coefficients.values[2];
-              viewer->addLine<pcl::PointXYZ>(start, end, 0, 1, 0, ss.str());
-
-              // add plane eigen vectors (TODO: just for debug)
-              ss << "c";
-              pcl::PointXYZ center, p1;
-              center = vsp_plane_viz[i].center;
-              p1.x = center.x + 0.01 * vsp_plane_viz[i].eigen_vectors[1].x *
-                                    sqrtf(vsp_plane_viz[i].eigen_values[1]);
-              p1.y = center.y + 0.01 * vsp_plane_viz[i].eigen_vectors[1].y *
-                                    sqrtf(vsp_plane_viz[i].eigen_values[1]);
-              p1.z = center.z + 0.01 * vsp_plane_viz[i].eigen_vectors[1].z *
-                                    sqrtf(vsp_plane_viz[i].eigen_values[1]);
-              viewer->addLine<pcl::PointXYZ>(center, p1, 0, 0, 0, ss.str());
-              ss << "c";
-              p1.x = center.x + 0.01 * vsp_plane_viz[i].eigen_vectors[2].x *
-                                    sqrtf(vsp_plane_viz[i].eigen_values[2]);
-              p1.y = center.y + 0.01 * vsp_plane_viz[i].eigen_vectors[2].y *
-                                    sqrtf(vsp_plane_viz[i].eigen_values[2]);
-              p1.z = center.z + 0.01 * vsp_plane_viz[i].eigen_vectors[2].z *
-                                    sqrtf(vsp_plane_viz[i].eigen_values[2]);
-              viewer->addLine<pcl::PointXYZ>(center, p1, 0, 0, 0, ss.str());
-            }
-          } else {
-            double r, g, b;
-            r = int(200.0 * rand() / (RAND_MAX + 1.0));
-            g = int(200.0 * rand() / (RAND_MAX + 1.0));
-            b = int(200.0 * rand() / (RAND_MAX + 1.0));
-            pcl::visualization::PointCloudColorHandlerCustom<
-                stair_perception::PointType>
-                single_color((vsp_plane_viz)[i].cloud.makeShared(), r, g, b);
-
-            std::stringstream ss;
-
-            ss << viewr_cloud_name << i;
-
-            if (show_cloud) {
-              if (vsp_plane_viz[i].cloud.points.size()) {
-                // add cloud
-                ss << "c";
-                viewer->addPointCloud<stair_perception::PointType>(
-                    (vsp_plane_viz)[i].cloud.makeShared(), single_color,
-                    ss.str());
-                viewer->setPointCloudRenderingProperties(
-                    pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, ss.str());
-              }
-            }
-
-            if (show_downsampled_cloud) {
-              if (vsp_plane_viz[i].random_down_sample_cloud.points.size()) {
-                ss << "c";
-                viewer->addPointCloud<stair_perception::PointType>(
-                    (vsp_plane_viz)[i].random_down_sample_cloud.makeShared(),
-                    single_color, ss.str());
-                viewer->setPointCloudRenderingProperties(
-                    pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, ss.str());
-              }
-            }
-
-            if (show_center) {
-              // add center
-              ss << "c";
-              viewer->addSphere((vsp_plane_viz)[i].center, 0.02, r / 255.0,
-                                g / 255.0, b / 255.0, ss.str());
-            }
-
-            if (show_counter) {
-              // add counter
-              ss << "c";
-              //                            viewer->addPolygon<pcl::PointXYZ>((vsp_plane_viz)[i].counter.makeShared(),
-              //                                                              r
-              //                                                              /
-              //                                                              255.0,
-              //                                                              g
-              //                                                              /
-              //                                                              255.0,
-              //                                                              b
-              //                                                              /
-              //                                                              255.0,
-              //                                                              ss.str());
-
-              myaddPolygon(*viewer, vsp_plane_viz[i].counter.makeShared(),
-                           polygonShowMode, r / 255.0, g / 255.0, b / 255.0,
-                           ss.str());
-            }
-
-            if (show_plane_info) {
-              // add plane number (TODO: just for debug)
-              ss << "c";
-              std::stringstream nss;
-              nss << "P" << i;
-              if (vsp_plane_viz[i].type ==
-                  stair_perception::Plane::Type::horizontal)
-                nss << "-H";
-              else if (vsp_plane_viz[i].type ==
-                       stair_perception::Plane::Type::vertical)
-                nss << "-V";
-              else
-                nss << "-S";
-              nss << "-pStair";
-              viewer->addText3D(nss.str(), vsp_plane_viz[i].center, 0.02, 0, 0,
-                                0, ss.str());
-              // add plane eigen vectors (TODO: just for debug)
-              ss << "c";
-              pcl::PointXYZ center, p1;
-              center = vsp_plane_viz[i].center;
-              p1.x = center.x + 0.01 * vsp_plane_viz[i].eigen_vectors[1].x *
-                                    sqrtf(vsp_plane_viz[i].eigen_values[1]);
-              p1.y = center.y + 0.01 * vsp_plane_viz[i].eigen_vectors[1].y *
-                                    sqrtf(vsp_plane_viz[i].eigen_values[1]);
-              p1.z = center.z + 0.01 * vsp_plane_viz[i].eigen_vectors[1].z *
-                                    sqrtf(vsp_plane_viz[i].eigen_values[1]);
-              viewer->addLine<pcl::PointXYZ>(center, p1, 0, 0, 0, ss.str());
-              ss << "c";
-              p1.x = center.x + 0.01 * vsp_plane_viz[i].eigen_vectors[2].x *
-                                    sqrtf(vsp_plane_viz[i].eigen_values[2]);
-              p1.y = center.y + 0.01 * vsp_plane_viz[i].eigen_vectors[2].y *
-                                    sqrtf(vsp_plane_viz[i].eigen_values[2]);
-              p1.z = center.z + 0.01 * vsp_plane_viz[i].eigen_vectors[2].z *
-                                    sqrtf(vsp_plane_viz[i].eigen_values[2]);
-              viewer->addLine<pcl::PointXYZ>(center, p1, 0, 0, 0, ss.str());
-
-              // add plane normal (TODO: just for debug)
-              ss << "c";
-              pcl::PointXYZ start, end;
-              start = (vsp_plane_viz)[i].center;
-              end.x = (vsp_plane_viz)[i].center.x +
-                      0.1 * (vsp_plane_viz)[i].coefficients.values[0];
-              end.y = (vsp_plane_viz)[i].center.y +
-                      0.1 * (vsp_plane_viz)[i].coefficients.values[1];
-              end.z = (vsp_plane_viz)[i].center.z +
-                      0.1 * (vsp_plane_viz)[i].coefficients.values[2];
-              viewer->addLine<pcl::PointXYZ>(start, end, r / 255.0, g / 255.0,
-                                             b / 255.0, ss.str());
-            }
-          }
-        }
-
-        if (!viz_key_info.init) {
-          // add stair key directions (TODO: just for debug)
-
-          if (show_key_directions) {
-            std::stringstream ss;
-            ss << "normal_";
-            pcl::PointXYZ start, vertical_plane_normal,
-                horizontal_plane_direction, main_center_diff_vector,
-                slide_direction;
-
-            start = pcl::PointXYZ(1, 0, 0.8);
-            ss << "c";
-            viewer->addSphere(start, 0.015, 0, 0, 0, ss.str());
-
-            vertical_plane_normal.x =
-                start.x +
-                0.2 * viz_key_info.main_vertical_plane_normal.normal[0];
-            vertical_plane_normal.y =
-                start.y +
-                0.2 * viz_key_info.main_vertical_plane_normal.normal[1];
-            vertical_plane_normal.z =
-                start.z +
-                0.2 * viz_key_info.main_vertical_plane_normal.normal[2];
-            ss << "vertical_plane_normal";
-            viewer->addLine<pcl::PointXYZ>(start, vertical_plane_normal, 255, 0,
-                                           0, ss.str());
-            ss << "c";
-            viewer->addText3D("vertical_plane_normal", vertical_plane_normal,
-                              0.02, 0, 0, 0, ss.str());
-
-            horizontal_plane_direction.x =
-                start.x +
-                0.2 * viz_key_info.horizontal_plane_direction.normal[0];
-            horizontal_plane_direction.y =
-                start.y +
-                0.2 * viz_key_info.horizontal_plane_direction.normal[1];
-            horizontal_plane_direction.z =
-                start.z +
-                0.2 * viz_key_info.horizontal_plane_direction.normal[2];
-            ss << "horizontal_plane_direction";
-            viewer->addLine<pcl::PointXYZ>(start, horizontal_plane_direction,
-                                           255, 0, 0, ss.str());
-            ss << "c";
-            viewer->addText3D("horizontal_plane_direction",
-                              horizontal_plane_direction, 0.02, 0, 0, 0,
-                              ss.str());
-
-            main_center_diff_vector.x =
-                start.x + 0.2 * viz_key_info.main_center_diff_vector.normal[0];
-            main_center_diff_vector.y =
-                start.y + 0.2 * viz_key_info.main_center_diff_vector.normal[1];
-            main_center_diff_vector.z =
-                start.z + 0.2 * viz_key_info.main_center_diff_vector.normal[2];
-            ss << "main_center_diff_vector";
-            viewer->addLine<pcl::PointXYZ>(start, main_center_diff_vector, 255,
-                                           0, 0, ss.str());
-            ss << "c";
-            viewer->addText3D("main_center_diff_vector",
-                              main_center_diff_vector, 0.02, 0, 0, 0, ss.str());
-          }
-        }
-
-        pcl::visualization::Camera camera{};
-        viewer->getCameraParameters(camera);
-
-        if (show_run_time) {
-          myaddText(*viewer, running_time_str, up_right,
-                    camera.window_size[0] - 10, camera.window_size[1] - 10, 12,
-                    0, 0, 0, "running_time_str");
-        }
-
-        if (has_stair) {
-          std::stringstream ss;
-          ss << "model_";
-
-          if (show_detial_model) {
-            ss << "c";
-            //                        viewer->addText(detial_stair_model,0,camera.window_size[1]/2,12,0,0,0,ss.str());
-            myaddText(*viewer, detial_stair_model, up_left, 10,
-                      camera.window_size[1] - 10, 12, 0, 0, 0, ss.str());
-          }
-
-          if (show_est_param) {
-            ss << "c";
-            //                        viewer->addText(est_stair_param,0,0,12,0,0,0,ss.str());
-            myaddText(*viewer, est_stair_param, down_left, 10, 10, 12, 0, 0, 0,
-                      ss.str());
-          }
-        }
-      }
-      //            ROS_INFO("rviz_loop out");
-      viewer->spinOnce(2);
-      mutex_vsp.unlock();
-      std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    }
-  }
-
-  void update_rviz_cloud(std::vector<stair_perception::Plane> &vsp_plane) {
-    mutex_vsp.lock();
-    vsp_plane_viz = vsp_plane;
-    viz_key_info = keyInfo;
-    mutex_vsp.unlock();
   }
 
   void send2robot(stair_perception::Stair &stair, ros::Time ctime) {
@@ -879,12 +349,7 @@ class StairModeling {
   std::string detial_stair_model, est_stair_param, running_time_str;
 
   /*********** PCLVisualizer ***********/
-  thread viz_thread;
-  mutex mutex_vsp;
   bool running;
-  boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
-  std::vector<stair_perception::Plane> vsp_plane_viz;
-  stair_perception::KeyInfo viz_key_info;
   bool show_key_directions;
   bool show_plane_info;
   bool show_cloud;
@@ -898,28 +363,11 @@ class StairModeling {
   PolygonShowMode polygonShowMode;
 };
 
-class StairModelingNodelet : public nodelet::Nodelet {
- public:
-  StairModelingNodelet() : Nodelet(), pstair_modeling(nullptr) {}
-
-  ~StairModelingNodelet() override { delete pstair_modeling; }
-
- private:
-  void onInit() override {
-    pstair_modeling = new StairModeling(getPrivateNodeHandle());
-    pstair_modeling->init();
-  }
-
-  StairModeling *pstair_modeling;
-};
-
-PLUGINLIB_EXPORT_CLASS(StairModelingNodelet, nodelet::Nodelet);
-
 int main(int argc, char **argv) {
   ros::init(argc, argv, "stair_modeling");
   ros::NodeHandle private_nh("~");
 
-  StairModeling stairModeling(private_nh, "vec_planes");
+  StairModeling stairModeling(private_nh, "/demo_peac/vecPlane");
 
   stairModeling.init();
 
