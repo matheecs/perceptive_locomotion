@@ -278,7 +278,6 @@ void StairDetection::sortPlanesByHeight(std::vector<Plane> &vector_plane) {
 
   std::vector<IndexCenter> vec_index_centers;
 
-  //        tic_toc_ms();
   for (size_t i = 0; i < vector_plane.size(); i++) {
     IndexCenter indexCenter;
     indexCenter.index = i;
@@ -286,7 +285,6 @@ void StairDetection::sortPlanesByHeight(std::vector<Plane> &vector_plane) {
 
     vec_index_centers.push_back(indexCenter);
   }
-  //        ROS_INFO("\tcreate vec_index_centers time: %.2f ms", tic_toc_ms());
 
   std::sort(vec_index_centers.begin(), vec_index_centers.end(),
             [&](IndexCenter pa, IndexCenter pb) {
@@ -295,7 +293,6 @@ void StairDetection::sortPlanesByHeight(std::vector<Plane> &vector_plane) {
                                           pa.center.z - pb.center.z);
               return diff_center.dot(down_direction) > 0;
             });
-  //        ROS_INFO("\tsort vec_index_centers time: %.2f ms", tic_toc_ms());
 
   // the current index list
   std::vector<int> curr_index;

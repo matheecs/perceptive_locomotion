@@ -104,7 +104,6 @@ class StairModeling {
 
   void cfg_callback(stair_modeling::stair_modeling_paramConfig &config,
                     uint32_t level) {
-    //        ROS_INFO("cfg_callback");
     stair_detector.setDown_sample_points_number(
         config.down_sample_points_number);
     stair_detector.setAngle_h(pcl::deg2rad(config.angle_h));
@@ -163,14 +162,6 @@ class StairModeling {
       vsp_plane.clear();
 
       auto t1 = system_clock::now();
-
-      //            if(pvec_plane->header.stamp.sec==1538726795
-      //            &&pvec_plane->header.stamp.nsec==574559773)
-      //            {
-      //                // error frame?
-      //                has_stair = false;
-      //                return;
-      //            }
 
       convertCloud(*pvec_plane, vsp_plane);
 
