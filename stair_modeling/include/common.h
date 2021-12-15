@@ -181,20 +181,21 @@ struct Plane {
     ptype = Ptype::pstair_component;
   }
 
-  Plane &operator+=(const Plane &other) {
-    this->sx += other.sx;
-    this->sy += other.sy;
-    this->sz += other.sz;
-    this->sxx += other.sxx;
-    this->syy += other.syy;
-    this->szz += other.szz;
-    this->sxy += other.sxy;
-    this->syz += other.syz;
-    this->sxz += other.sxz;
-    this->N += other.N;
-    this->cloud += other.cloud;
-    this->random_down_sample_cloud += other.random_down_sample_cloud;
+  Plane &operator+=(const Plane &rhs) {
+    this->sx += rhs.sx;
+    this->sy += rhs.sy;
+    this->sz += rhs.sz;
+    this->sxx += rhs.sxx;
+    this->syy += rhs.syy;
+    this->szz += rhs.szz;
+    this->sxy += rhs.sxy;
+    this->syz += rhs.syz;
+    this->sxz += rhs.sxz;
+    this->N += rhs.N;
+    this->cloud += rhs.cloud;
+    this->random_down_sample_cloud += rhs.random_down_sample_cloud;
     this->computePlaneInfo();
+    return *this;
   }
 };
 }  // namespace stair_perception

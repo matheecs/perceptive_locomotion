@@ -3,9 +3,8 @@ project(stair_modeling)
 
 # Compile as C++11, supported in ROS Kinetic and newer
 set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -march=native -g")
 set(CMAKE_BUILD_TYPE "Release")
-# add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
 
 find_package(
   catkin REQUIRED
