@@ -319,7 +319,6 @@ class StairModeling {
   std::string topicVecPlane;
   ros::Subscriber sub;
   ros::Publisher pub_stair_info;
-  ros::Publisher pub_cloud;
 
   std::vector<stair_perception::Plane> vsp_plane;
 
