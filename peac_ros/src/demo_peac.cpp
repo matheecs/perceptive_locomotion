@@ -1,4 +1,5 @@
 #include <cv_bridge/cv_bridge.h>
+#include <image_transport/image_transport.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/sync_policies/approximate_time.h>
 #include <message_filters/sync_policies/exact_time.h>
@@ -12,9 +13,11 @@
 #include <pcl_conversions/pcl_conversions.h>
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
+#include <sensor_msgs/image_encodings.h>
 
 #include <Eigen/Eigen>
 #include <chrono>
+// #include <opencv2/imgproc/imgproc.hpp>
 
 #include "AHCPlaneFitter.hpp"
 #include "plane_msg/Plane.h"
@@ -42,10 +45,11 @@ typedef ahc::PlaneFitter<OrganizedImage3D> PlaneFitter;
 class peac_ros {
  public:
   peac_ros(const ros::NodeHandle& private_nh = ros::NodeHandle("~"))
-      : private_nh_(private_nh) {
+      : private_nh_(private_nh), it_(private_nh) {
     pub_vec_planes_ = private_nh_.advertise<plane_msg::VecPlane>("vecPlane", 5);
-    pub_pcl_depth_ =
+    pub_pcl2_depth_ =
         private_nh_.advertise<sensor_msgs::PointCloud2>("depth_pcl", 5);
+    pub_img_planes_ = it_.advertise("vec_plane_img", 1);
 
     depth_sub_.reset(new message_filters::Subscriber<sensor_msgs::Image>(
         private_nh_, "/d400/depth/image_rect_raw", 50));
@@ -145,14 +149,14 @@ class peac_ros {
     }
 
     // Visulization
-    // if (pub_pcl_depth_.getNumSubscribers() > 0) {
+    // if (pub_pcl2_depth_.getNumSubscribers() > 0) {
     //   pcl_viz.width = pcl_viz.points.size();
     //   pcl_viz.height = 1;
     //   pcl_viz.is_dense = true;
     //   sensor_msgs::PointCloud2 pcl_ros;
     //   pcl::toROSMsg(pcl_viz, pcl_ros);
     //   pcl_ros.header.frame_id = "t265_odom_frame";
-    //   pub_pcl_depth_.publish(pcl_ros);
+    //   pub_pcl2_depth_.publish(pcl_ros);
     // }
 
     PlaneFitter pf;
@@ -170,8 +174,11 @@ class peac_ros {
         duration_cast<microseconds>(high_resolution_clock::now() - t1);
     cout << "PlaneFitter: " << duration.count() / 1000.0 << " ms" << endl;
 
-    cv::imshow("Seg", Seg);
-    cv::waitKey(1);
+    cv_bridge::CvImage out_msg;
+    out_msg.header = depth_msg->header;
+    out_msg.encoding = sensor_msgs::image_encodings::BGR8;
+    out_msg.image = Seg;
+    pub_img_planes_.publish(out_msg.toImageMsg());
 
     // GenerateVecPlanes
     plane_msg::VecPlane vecPlane;
@@ -217,7 +224,10 @@ class peac_ros {
 
   ros::NodeHandle private_nh_;
   ros::Publisher pub_vec_planes_;
-  ros::Publisher pub_pcl_depth_;
+  ros::Publisher pub_pcl2_depth_;
+
+  image_transport::ImageTransport it_;
+  image_transport::Publisher pub_img_planes_;
 };
 
 int main(int argc, char** argv) {

@@ -20,6 +20,7 @@ find_package(
              tf
              message_filters
              dynamic_reconfigure
+             image_transport
              cv_bridge
              message_generation
              message_runtime
