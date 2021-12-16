@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 project(stair_modeling)
 
-# Compile as C++11, supported in ROS Kinetic and newer
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -march=native -g")
 set(CMAKE_BUILD_TYPE "Release")
@@ -12,12 +11,13 @@ find_package(
              plane_msg
              roscpp
              sensor_msgs
+             geometry_msgs
              std_msgs
+             jsk_recognition_msgs
              tf
              stair_info_msg)
 
-# System dependencies are found with CMake's conventions find_package(Boost
-# REQUIRED COMPONENTS system)
+# System dependencies are found with CMake's conventions
 find_package(PCL 1.2 REQUIRED)
 
 generate_dynamic_reconfigure_options(cfg/stair_modeling_params.cfg)
@@ -34,8 +34,6 @@ catkin_package(
   # DEPENDS system_lib
 )
 
-# Specify additional locations of header files Your package locations should be
-# listed before other locations
 include_directories(include ${catkin_INCLUDE_DIRS})
 
 include_directories(${PCL_INCLUDE_DIRS})

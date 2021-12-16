@@ -1,4 +1,7 @@
 #include <dynamic_reconfigure/server.h>
+#include <geometry_msgs/Point32.h>
+#include <geometry_msgs/PolygonStamped.h>
+#include <jsk_recognition_msgs/PolygonArray.h>
 #include <pcl/common/common.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -66,6 +69,8 @@ class StairModeling {
 
     pub_stair_info =
         private_nh.advertise<stair_info_msg::stair_info>("stair_info", 5);
+    pub_stair_poly = private_nh.advertise<jsk_recognition_msgs::PolygonArray>(
+        "stair_polygon_array", 1);
 
     time_record.open("modeling_time_record.csv");
     time_record << "TIME_STAMP"
@@ -178,6 +183,7 @@ class StairModeling {
           << std::endl;
 
       if (has_stair) {
+        ROS_INFO("Find stair");
         detial_stair_model = stair_detector.getDetialStairModelString(stair);
         est_stair_param = stair_detector.getEstimatedParamString(stair);
 
@@ -185,6 +191,9 @@ class StairModeling {
         stair_record << stair_detector.getEstimatedParamStringRcd(stair);
 
         send2robot(stair, pvec_plane->vecPlane[0].cloud.header.stamp);
+
+        publish_rviz_stair(vsp_plane,
+                           pvec_plane->vecPlane[0].cloud.header.stamp);
       } else {
         detial_stair_model = "No stair";
         est_stair_param = "No stair";
@@ -201,7 +210,6 @@ class StairModeling {
   void convertCloud(const plane_msg::VecPlane &vec_plane,
                     std::vector<stair_perception::Plane> &vsp_plane) {
     unsigned long plane_number = vec_plane.vecPlane.size();
-    cout << "plane_number: " << plane_number << endl;
     vsp_plane.resize(plane_number);
 
     // omp_set_num_threads(4);
@@ -303,6 +311,41 @@ class StairModeling {
     pub_stair_info.publish(msg);
   }
 
+  void publish_rviz_stair(
+      const std::vector<stair_perception::Plane> &vsp_plane_viz, ros::Time t) {
+    jsk_recognition_msgs::PolygonArray array_msg;
+    array_msg.header.stamp = t;
+    array_msg.header.frame_id = "t265_odom_frame";
+
+    if (!vsp_plane_viz.empty()) {
+      for (unsigned int i = 0; i < vsp_plane_viz.size(); i++) {
+        if ((vsp_plane_viz)[i].ptype ==
+            stair_perception::Plane::Ptype::stair_component) {
+          geometry_msgs::PolygonStamped polygon_stamped;
+          polygon_stamped.header.stamp = t;
+          polygon_stamped.header.frame_id = "t265_odom_frame";
+          if (vsp_plane_viz[i].counter.points.size() == 4) {
+            for (unsigned int j = 0; j < 4; j++) {
+              geometry_msgs::Point32 point32;
+              point32.x = vsp_plane_viz[i].counter.points[j].x;
+              point32.y = vsp_plane_viz[i].counter.points[j].y;
+              point32.z = vsp_plane_viz[i].counter.points[j].z;
+              polygon_stamped.polygon.points.push_back(point32);
+            }
+          }
+          array_msg.polygons.push_back(polygon_stamped);
+        } else if ((vsp_plane_viz)[i].ptype ==
+                   stair_perception::Plane::Ptype::others) {
+        } else if ((vsp_plane_viz)[i].ptype ==
+                   stair_perception::Plane::Ptype::ground) {
+        } else {
+          // pstair_component
+        }
+      }
+    }
+    pub_stair_poly.publish(array_msg);
+  }
+
  private:
   int count;
 
@@ -318,7 +361,7 @@ class StairModeling {
   ros::NodeHandle private_nh;
   std::string topicVecPlane;
   ros::Subscriber sub;
-  ros::Publisher pub_stair_info;
+  ros::Publisher pub_stair_info, pub_stair_poly;
 
   std::vector<stair_perception::Plane> vsp_plane;
 
