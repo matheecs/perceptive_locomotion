@@ -1458,7 +1458,7 @@ bool StairDetection::modelingStair(std::vector<Plane> &vector_plane,
                               keyInfo.main_vertical_plane_normal.normal, tmp,
                               point_h1, min_p, max_p);
 
-          // "center"
+          // "center" #TODO NOT the real center (matheecs)
           virtual_virtcal_plane.center.x = point_h1.x;
           virtual_virtcal_plane.center.y = point_h1.y;
           virtual_virtcal_plane.center.z = point_h1.z;
