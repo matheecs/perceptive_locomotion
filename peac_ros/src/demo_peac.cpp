@@ -131,7 +131,7 @@ class peac_ros {
         proj_pt(0) = (c - cx) * z / fx;
         proj_pt(1) = (r - cy) * z / fy;
         proj_pt(2) = z;
-        // We can not do transform before PlaneFitter!!!
+        // note: Do not transform before PlaneFitter!!!
         pt_ptr[c][0] = proj_pt(0) * 1000.0;  // unit: m->mm
         pt_ptr[c][1] = proj_pt(1) * 1000.0;  // unit: m->mm
         pt_ptr[c][2] = proj_pt(2) * 1000.0;  // unit: m->mm
