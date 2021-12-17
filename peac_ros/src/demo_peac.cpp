@@ -162,8 +162,8 @@ class peac_ros {
 
     PlaneFitter pf;
     pf.minSupport = 3000;
-    pf.windowWidth = 20;
-    pf.windowHeight = 20;
+    pf.windowWidth = 10;
+    pf.windowHeight = 10;
     pf.doRefine = true;
 
     auto t1 = high_resolution_clock::now();
