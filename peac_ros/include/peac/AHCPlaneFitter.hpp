@@ -211,16 +211,13 @@ struct PlaneFitter {
    *
    *  \param [in] pointsIn a frame of point cloud
    *  \param [out] pMembership pointer to segmentation membership vector, each
-   *    pMembership->at(i) is a vector of pixel indices that belong to the i-th
-   *    extracted plane
-   *  \param [out] pSeg a 3-channel RGB image as another form of
-   *    output of segmentation
-   *  \param [in] pIdxMap usually not needed (reserved for
-   *    KinectSLAM to input pixel index map)
-   *  \param [in] verbose print out cluster steps and #planes or not
-   *  \return when compiled without EVAL_SPEED: 0 if pointsIn==0 and 1
-   *    otherwise; when compiled with EVAL_SPEED: total running time for this
-   *    frame
+   * pMembership->at(i) is a vector of pixel indices that belong to the i-th
+   * extracted plane \param [out] pSeg a 3-channel RGB image as another form of
+   * output of segmentation \param [in] pIdxMap usually not needed (reserved for
+   * KinectSLAM to input pixel index map) \param [in] verbose print out cluster
+   * steps and #planes or not \return when compiled without EVAL_SPEED: 0 if
+   * pointsIn==0 and 1 otherwise; when compiled with EVAL_SPEED: total running
+   * time for this frame
    *
    *  \details this function corresponds to Algorithm 1 in our paper
    */
@@ -280,27 +277,25 @@ struct PlaneFitter {
    *  \brief print out the current parameters
    */
   void logParams() const {
-    // #define TMP_LOG_VAR(var) << #var "="<<(var)<<"\n"
-    // 			std::cout<<"[PlaneFitter] Parameters:\n"
-    // 			TMP_LOG_VAR(width)
-    // 			TMP_LOG_VAR(height)
-    // 			TMP_LOG_VAR(mergeMSETolerance)
-    // 			TMP_LOG_VAR(initMSETolerance)
-    // 			TMP_LOG_VAR(depthSigmaFactor)
-    // 			TMP_LOG_VAR(similarityTh)
-    // 			TMP_LOG_VAR(finalMergeSimilarityTh)
-    // 			TMP_LOG_VAR(simTh_znear)
-    // 			TMP_LOG_VAR(simTh_zfar)
-    // 			TMP_LOG_VAR(simTh_angleMin)
-    // 			TMP_LOG_VAR(simTh_angleMax)
-    // 			TMP_LOG_VAR(depthChangeFactor)
-    // 			TMP_LOG_VAR(maxStep)
-    // 			TMP_LOG_VAR(minSupport)
-    // 			TMP_LOG_VAR(windowWidth)
-    // 			TMP_LOG_VAR(windowHeight)
-    // 			TMP_LOG_VAR(erodeType)
-    // 			TMP_LOG_VAR(doRefine)<<std::endl;
-    // #undef TMP_LOG_VAR
+#define TMP_LOG_VAR(var) << #var "=" << (var) << "\n"
+    std::cout
+        << "[PlaneFitter] Parameters:\n" TMP_LOG_VAR(width) TMP_LOG_VAR(height)
+               TMP_LOG_VAR(params.depthSigma) TMP_LOG_VAR(params.stdTol_init)
+                   TMP_LOG_VAR(params.stdTol_merge) TMP_LOG_VAR(params.z_near)
+                       TMP_LOG_VAR(params.z_far) TMP_LOG_VAR(params.angle_near)
+                           TMP_LOG_VAR(params.angle_far) TMP_LOG_VAR(
+                               params.similarityTh_merge)
+                               TMP_LOG_VAR(params.similarityTh_refine)
+                                   TMP_LOG_VAR(params.depthAlpha)
+                                       TMP_LOG_VAR(params.depthChangeTol)
+                                           TMP_LOG_VAR(maxStep) TMP_LOG_VAR(
+                                               minSupport)
+                                               TMP_LOG_VAR(windowWidth)
+                                                   TMP_LOG_VAR(windowHeight)
+                                                       TMP_LOG_VAR(erodeType)
+                                                           TMP_LOG_VAR(doRefine)
+        << std::endl;
+#undef TMP_LOG_VAR
   }
 
   /************************************************************************/
@@ -806,7 +801,7 @@ struct PlaneFitter {
     const int Nw = this->width / this->windowWidth;
 
     // 1. init nodes
-    std::vector<PlaneSeg::Ptr> G(Nh * Nw, 0);
+    std::vector<PlaneSeg::Ptr> G(Nh * Nw, static_cast<PlaneSeg::Ptr>(0));
     // this->blkStats.resize(Nh*Nw);
 
 #ifdef DEBUG_INIT
@@ -973,6 +968,7 @@ struct PlaneFitter {
     std::stringstream ss;
     ss << saveDir << "/output/db_init" << std::setw(5) << std::setfill('0')
        << cnt++ << ".png";
+    std::cout << ss.str() << std::endl;
     cv::imwrite(ss.str(), dInit);
 #endif
 #ifdef DEBUG_CALC
@@ -1060,7 +1056,7 @@ struct PlaneFitter {
           continue;
         PlaneSeg::shared_ptr merge(new PlaneSeg(*p, *nb));
         if (cand_merge == 0 || cand_merge->mse > merge->mse ||
-            (cand_merge->mse == merge->mse && cand_merge->N < merge->mse)) {
+            (cand_merge->mse == merge->mse && cand_merge->N < merge->N)) {
           cand_merge = merge;
           cand_nb = nb;
         }

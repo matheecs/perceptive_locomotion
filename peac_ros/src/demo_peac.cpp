@@ -115,8 +115,8 @@ class peac_ros {
     const float min_use_range = 0.1;  // unit: m
     const float max_use_range = 3.5;  // unit: m
 
-    // Visulization
-    // pcl::PointCloud<pcl::PointXYZ> pcl_viz;
+    // only for visulization
+    pcl::PointCloud<pcl::PointXYZ> pcl_viz;
 
     cv::Mat_<cv::Vec3f> cloud(depth.rows, depth.cols);
     for (int r = 0; r < depth.rows; r++) {
@@ -132,32 +132,33 @@ class peac_ros {
         proj_pt(1) = (r - cy) * z / fy;
         proj_pt(2) = z;
         // We can not do transform before PlaneFitter!!!
-        // proj_pt = camera_rotation_m * proj_pt + camera_pos;
         pt_ptr[c][0] = proj_pt(0) * 1000.0;  // unit: m->mm
         pt_ptr[c][1] = proj_pt(1) * 1000.0;  // unit: m->mm
         pt_ptr[c][2] = proj_pt(2) * 1000.0;  // unit: m->mm
 
-        // Visulization
-        // if (z > 0.0) {
-        //   pcl::PointXYZ pt;
-        //   pt.x = proj_pt(0);
-        //   pt.y = proj_pt(1);
-        //   pt.z = proj_pt(2);
-        //   pcl_viz.points.push_back(pt);
-        // }
+        // only for visulization
+        if (z > 0.0) {
+          proj_pt = camera_rotation_m * proj_pt + camera_pos;
+          pcl::PointXYZ pt;
+          pt.x = proj_pt(0);
+          pt.y = proj_pt(1);
+          pt.z = proj_pt(2);
+          pcl_viz.points.push_back(pt);
+        }
       }
     }
 
-    // Visulization
-    // if (pub_pcl2_depth_.getNumSubscribers() > 0) {
-    //   pcl_viz.width = pcl_viz.points.size();
-    //   pcl_viz.height = 1;
-    //   pcl_viz.is_dense = true;
-    //   sensor_msgs::PointCloud2 pcl_ros;
-    //   pcl::toROSMsg(pcl_viz, pcl_ros);
-    //   pcl_ros.header.frame_id = "t265_odom_frame";
-    //   pub_pcl2_depth_.publish(pcl_ros);
-    // }
+    // only for visulization
+    if (pub_pcl2_depth_.getNumSubscribers() > 0) {
+      pcl_viz.width = pcl_viz.points.size();
+      pcl_viz.height = 1;
+      pcl_viz.is_dense = true;
+      sensor_msgs::PointCloud2 pcl_ros;
+      pcl::toROSMsg(pcl_viz, pcl_ros);
+      pcl_ros.header.frame_id = "t265_odom_frame";
+      pcl_ros.header.stamp = depth_msg->header.stamp;
+      pub_pcl2_depth_.publish(pcl_ros);
+    }
 
     PlaneFitter pf;
     pf.minSupport = 3000;
@@ -174,11 +175,13 @@ class peac_ros {
         duration_cast<microseconds>(high_resolution_clock::now() - t1);
     cout << "PlaneFitter: " << duration.count() / 1000.0 << " ms" << endl;
 
-    cv_bridge::CvImage out_msg;
-    out_msg.header = depth_msg->header;
-    out_msg.encoding = sensor_msgs::image_encodings::BGR8;
-    out_msg.image = Seg;
-    pub_img_planes_.publish(out_msg.toImageMsg());
+    if (pub_img_planes_.getNumSubscribers() > 0) {
+      cv_bridge::CvImage out_msg;
+      out_msg.header = depth_msg->header;
+      out_msg.encoding = sensor_msgs::image_encodings::BGR8;
+      out_msg.image = Seg;
+      pub_img_planes_.publish(out_msg.toImageMsg());
+    }
 
     // GenerateVecPlanes
     plane_msg::VecPlane vecPlane;
