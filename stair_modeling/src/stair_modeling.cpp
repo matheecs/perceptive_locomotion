@@ -35,7 +35,6 @@ class StairModeling {
       const std::string &topicVecPlane = "vec_planes")
       : private_nh(private_nh),
         queueSize(5),
-        running(true),
         count(0),
         topicVecPlane(topicVecPlane),
         has_stair(false),
@@ -44,19 +43,8 @@ class StairModeling {
         hd(0),
         vd(0),
         time_window(2),
-        show_key_directions(true),
-        show_cloud(true),
-        show_counter(true),
-        show_downsampled_cloud(false),
-        show_plane_info(true),
-        show_center(true),
-        show_detial_model(false),
-        show_est_param(false),
-        polygonShowMode(polygon_line_mode),
         server(new dynamic_reconfigure::Server<
                stair_modeling::stair_modeling_paramConfig>(private_nh)) {}
-
-  ~StairModeling() { running = false; }
 
   void init() {
     ROS_INFO("############# StairModeling start #############");
@@ -136,21 +124,7 @@ class StairModeling {
     stair_detector.setStair_cv_angle_diff_th(
         pcl::deg2rad(config.stair_cv_angle_diff_th));
 
-    show_key_directions = config.show_key_directions;
-    show_plane_info = config.show_plane_info;
-    show_cloud = config.show_cloud;
-    show_downsampled_cloud = config.show_downsampled_cloud;
-    show_counter = config.show_counter;
-    show_center = config.show_center;
-    show_detial_model = config.show_detial_model;
-    show_est_param = config.show_est_param;
-    show_run_time = config.show_run_time;
-    show_stair_cloud = config.show_stair_cloud;
     time_window = config.time_window;
-    if (config.polygonShowMode == 0)
-      polygonShowMode = polygon_line_mode;
-    else
-      polygonShowMode = polygon_surface_mode;
   }
 
   void callback(const plane_msg::VecPlane::ConstPtr &pvec_plane) {
@@ -377,20 +351,6 @@ class StairModeling {
   bool has_stair;
 
   std::string detial_stair_model, est_stair_param, running_time_str;
-
-  /*********** PCLVisualizer ***********/
-  bool running;
-  bool show_key_directions;
-  bool show_plane_info;
-  bool show_cloud;
-  bool show_downsampled_cloud;
-  bool show_counter;
-  bool show_center;
-  bool show_detial_model;
-  bool show_est_param;
-  bool show_run_time;
-  bool show_stair_cloud;
-  PolygonShowMode polygonShowMode;
 };
 
 int main(int argc, char **argv) {
@@ -398,11 +358,9 @@ int main(int argc, char **argv) {
   ros::NodeHandle private_nh("~");
 
   StairModeling stairModeling(private_nh, "/demo_peac/vecPlane");
-
   stairModeling.init();
 
   ros::spin();
-
   ros::shutdown();
   return 0;
 }
