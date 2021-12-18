@@ -160,7 +160,6 @@ class peac_ros {
       pub_pcl2_depth_.publish(pcl_ros);
     }
 
-    PlaneFitter pf;
     pf.minSupport = 3000;
     pf.windowWidth = 10;
     pf.windowHeight = 10;
@@ -231,6 +230,8 @@ class peac_ros {
 
   image_transport::ImageTransport it_;
   image_transport::Publisher pub_img_planes_;
+
+  PlaneFitter pf;
 };
 
 int main(int argc, char** argv) {
