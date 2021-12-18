@@ -568,7 +568,7 @@ void StairDetection::computeConfuseMatrix(
       // compute matrix
       confuse_matrix[i][j].distance =
           minDistaceOfTwoCloud(vector_plane[i], vector_plane[j]);
-      confuse_matrix[i][j].delta_h =
+      confuse_matrix[i][j].delta_h =  // #TODO fix
           fabs(vector_plane[i].center.x - vector_plane[j].center.x);
       confuse_matrix[i][j].center_direction =
           Eigen::Vector3f(vector_plane[j].center.x - vector_plane[i].center.x,
@@ -1458,7 +1458,7 @@ bool StairDetection::modelingStair(std::vector<Plane> &vector_plane,
                               keyInfo.main_vertical_plane_normal.normal, tmp,
                               point_h1, min_p, max_p);
 
-          // "center" #TODO NOT the real center (matheecs)
+          // #TODO fix
           virtual_virtcal_plane.center.x = point_h1.x;
           virtual_virtcal_plane.center.y = point_h1.y;
           virtual_virtcal_plane.center.z = point_h1.z;
@@ -1614,6 +1614,7 @@ bool StairDetection::modelingStair(std::vector<Plane> &vector_plane,
         float min_p, max_p;
         findMinMaxProjPoint(vector_plane[index], down_direction, point_min,
                             point_max, min_p, max_p);
+        // #TODO fix
         p_step->step.height = fabs(point_max.x - line.h);
         p_step->step.good_h = false;
       }

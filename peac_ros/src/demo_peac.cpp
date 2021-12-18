@@ -160,6 +160,7 @@ class peac_ros {
       pub_pcl2_depth_.publish(pcl_ros);
     }
 
+    // #TODO fix
     pf.minSupport = 3000;
     pf.windowWidth = 10;
     pf.windowHeight = 10;
