@@ -186,8 +186,6 @@ class StairModeling {
     unsigned long plane_number = vec_plane.vecPlane.size();
     vsp_plane.resize(plane_number);
 
-    // omp_set_num_threads(4);
-    // #pragma omp parallel for
     for (size_t i = 0; i < plane_number; i++) {
       pcl::fromROSMsg(vec_plane.vecPlane[i].cloud, vsp_plane[i].cloud);
 
