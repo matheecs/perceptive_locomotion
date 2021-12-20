@@ -30,7 +30,7 @@
 // If you use dsyevh3 library
 // [http://www.mpi-hd.mpg.de/personalhomes/globes/3x3/], this function can be
 // accelerated by uncommenting the following line
-//#define USE_DSYEVH3
+#define USE_DSYEVH3
 // This can be done automatically by selecting OPT_USE_DSYEVH3 in cmake
 //
 #ifdef USE_DSYEVH3

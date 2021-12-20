@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.10)
 project(peac_ros)
 
 set(CMAKE_CXX_STANDARD 14)
@@ -43,6 +43,14 @@ catkin_package(
 include_directories(include/peac ${EIGEN3_INCLUDE_DIR} ${catkin_INCLUDE_DIRS}
                     ${PCL_INCLUDE_DIRS})
 
+set(DSYEVH3_ROOT "3rdparty/dsyevh3")
+include_directories(${DSYEVH3_ROOT})
+set(DSYEVH3_SRC ${DSYEVH3_ROOT}/dsyevc3.c ${DSYEVH3_ROOT}/dsyevh3.c
+                ${DSYEVH3_ROOT}/dsyevq3.c ${DSYEVH3_ROOT}/dsytrd3.c)
+set_source_files_properties(${DSYEVH3_SRC} PROPERTIES LANGUAGE CXX)
+add_library(lib3x3 SHARED ${DSYEVH3_SRC})
+target_include_directories(lib3x3 PUBLIC ${DSYEVH3_ROOT})
+
 add_executable(demo_peac src/demo_peac.cpp)
-target_link_libraries(demo_peac ${OpenCV_LIBRARIES} ${catkin_LIBRARIES}
-                      ${PCL_LIBRARIES})
+target_link_libraries(demo_peac PRIVATE lib3x3 ${OpenCV_LIBRARIES}
+                                        ${catkin_LIBRARIES} ${PCL_LIBRARIES})
