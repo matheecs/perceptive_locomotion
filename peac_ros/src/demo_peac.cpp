@@ -108,10 +108,16 @@ class peac_ros {
     }
 
     // configuration: 640*480 D435 & T265
-    const float fx = 384.6916198730469;
-    const float fy = 384.6916198730469;
-    const float cx = 320.2483215332031;
-    const float cy = 239.5032501220703;
+    // const float fx = 384.6916198730469;
+    // const float fy = 384.6916198730469;
+    // const float cx = 320.2483215332031;
+    // const float cy = 239.5032501220703;
+
+    // configuration: 848*480 D435 & T265
+    const float fx = 424.763671875;
+    const float fy = 424.763671875;
+    const float cx = 424.27420043945310;
+    const float cy = 239.45150756835938;
     const float min_use_range = 0.1;  // unit: m
     const float max_use_range = 3.5;  // unit: m
 
@@ -161,9 +167,9 @@ class peac_ros {
     }
 
     // #TODO fix
-    pf.minSupport = 3000;
-    pf.windowWidth = 10;
-    pf.windowHeight = 10;
+    pf.minSupport = 2000;
+    pf.windowWidth = 8;
+    pf.windowHeight = 8;
     pf.doRefine = true;
 
     auto t1 = high_resolution_clock::now();

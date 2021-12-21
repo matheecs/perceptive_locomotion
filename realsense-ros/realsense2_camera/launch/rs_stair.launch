@@ -10,7 +10,7 @@
   <arg name="initial_reset"             default="false"/>
   <arg name="reconnect_timeout"         default="6.0"/>
   <arg name="enable_fisheye"            default="false"/>
-  <arg name="depth_width"               default="640"/>
+  <arg name="depth_width"               default="848"/>
   <arg name="depth_height"              default="480"/>
   <arg name="clip_distance"             default="-2"/>
   <arg name="topic_odom_in"             default="odom_in"/>
