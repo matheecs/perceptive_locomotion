@@ -17,7 +17,6 @@
 
 #include <Eigen/Eigen>
 #include <chrono>
-// #include <opencv2/imgproc/imgproc.hpp>
 
 #include "AHCPlaneFitter.hpp"
 #include "plane_msg/Plane.h"

@@ -58,11 +58,12 @@ struct int2 {
 };
 
 class StairDetection {
- private:
+ public:
   /********************** run time parameters ****************************/
   // the down direction and ref right direction which parallel with gravity
   Eigen::Vector3f down_direction, right_direction, forward_diretion;
 
+ private:
   // remain point number of each plane after random down sample
   int down_sample_points_number;
 

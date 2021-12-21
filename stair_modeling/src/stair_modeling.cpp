@@ -2,6 +2,7 @@
 #include <geometry_msgs/Point32.h>
 #include <geometry_msgs/PolygonStamped.h>
 #include <jsk_recognition_msgs/PolygonArray.h>
+#include <nav_msgs/Odometry.h>
 #include <pcl/common/common.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -11,6 +12,7 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <stair_modeling/stair_modeling_paramConfig.h>
 
+#include <Eigen/Eigen>
 #include <backward.hpp>
 #include <chrono>
 
@@ -32,11 +34,13 @@ class StairModeling {
  public:
   explicit StairModeling(
       const ros::NodeHandle &private_nh = ros::NodeHandle("~"),
-      const std::string &topicVecPlane = "vec_planes")
+      const std::string &topicVecPlane = "vec_planes",
+      const std::string &topicOdom = "odom")
       : private_nh(private_nh),
         queueSize(5),
         count(0),
         topicVecPlane(topicVecPlane),
+        topicOdom(topicOdom),
         has_stair(false),
         height(0),
         depth(0),
@@ -49,8 +53,10 @@ class StairModeling {
   void init() {
     ROS_INFO("############# StairModeling start #############");
 
-    sub = private_nh.subscribe(topicVecPlane, queueSize,
-                               &StairModeling::callback, this);
+    sub_vec_plane = private_nh.subscribe(topicVecPlane, queueSize,
+                                         &StairModeling::callback, this);
+    sub_t265_odom = private_nh.subscribe(topicOdom, queueSize,
+                                         &StairModeling::odom_callback, this);
 
     f = boost::bind(&StairModeling::cfg_callback, this, _1, _2);
     server->setCallback(f);
@@ -125,6 +131,57 @@ class StairModeling {
         pcl::deg2rad(config.stair_cv_angle_diff_th));
 
     time_window = config.time_window;
+  }
+
+  void odom_callback(const nav_msgs::OdometryConstPtr &odom) {
+    // Get d400 pose in world (t265 as body)
+    Eigen::Quaternionf body_rotation_q = Eigen::Quaternionf(
+        odom->pose.pose.orientation.w, odom->pose.pose.orientation.x,
+        odom->pose.pose.orientation.y, odom->pose.pose.orientation.z);
+    Eigen::Matrix3f body_rotation_m = body_rotation_q.toRotationMatrix();
+    Eigen::Matrix4f body2world;  // from world to body
+    body2world.block<3, 3>(0, 0) = body_rotation_m;
+    body2world(0, 3) = odom->pose.pose.position.x;
+    body2world(1, 3) = odom->pose.pose.position.y;
+    body2world(2, 3) = odom->pose.pose.position.z;
+    body2world(3, 3) = 1.0;
+
+    Eigen::Matrix4f cam2body;  // from body to cam
+    Eigen::Quaternionf cam2body_rotation_q = Eigen::Quaternionf(1, 0, 0, 0);
+    cam2body.block<3, 3>(0, 0) = cam2body_rotation_q.toRotationMatrix();
+    cam2body(0, 3) = -0.009375589;
+    cam2body(1, 3) = 0.015890727;
+    cam2body(2, 3) = 0.028273059;
+    cam2body(3, 3) = 1.0;
+
+    Eigen::Matrix4f cam_world = body2world * cam2body;
+    Eigen::Vector3f camera_pos;
+    camera_pos(0) = cam_world(0, 3);
+    camera_pos(1) = cam_world(1, 3);
+    camera_pos(2) = cam_world(2, 3);
+    Eigen::Quaternionf camera_rotation_q =
+        Eigen::Quaternionf(cam_world.block<3, 3>(0, 0));
+
+    // update down_direction, right_direction, forward_diretion
+    stair_detector.down_direction = Eigen::Vector3f(0, 0, -1);
+
+    float yaw = fromQuaternion2yaw(camera_rotation_q);
+    Eigen::Quaternionf q = Eigen::AngleAxisf(yaw, Eigen::Vector3f::UnitZ()) *
+                           Eigen::AngleAxisf(0, Eigen::Vector3f::UnitY()) *
+                           Eigen::AngleAxisf(0, Eigen::Vector3f::UnitX());
+    stair_detector.forward_diretion =
+        q.toRotationMatrix() * Eigen::Vector3f(1, 0, 0);
+
+    stair_detector.right_direction =
+        stair_detector.down_direction.cross(stair_detector.forward_diretion);
+    stair_detector.right_direction.normalize();
+  }
+
+  float fromQuaternion2yaw(Eigen::Quaternionf q) {
+    float yaw =
+        atan2(2 * (q.x() * q.y() + q.w() * q.z()),
+              q.w() * q.w() + q.x() * q.x() - q.y() * q.y() - q.z() * q.z());
+    return yaw;
   }
 
   void callback(const plane_msg::VecPlane::ConstPtr &pvec_plane) {
@@ -332,7 +389,9 @@ class StairModeling {
   uint32_t queueSize;
   ros::NodeHandle private_nh;
   std::string topicVecPlane;
-  ros::Subscriber sub;
+  std::string topicOdom;
+  ros::Subscriber sub_vec_plane;
+  ros::Subscriber sub_t265_odom;
   ros::Publisher pub_stair_info, pub_stair_poly;
 
   std::vector<stair_perception::Plane> vsp_plane;
@@ -355,7 +414,8 @@ int main(int argc, char **argv) {
   ros::init(argc, argv, "stair_modeling");
   ros::NodeHandle private_nh("~");
 
-  StairModeling stairModeling(private_nh, "/demo_peac/vecPlane");
+  StairModeling stairModeling(private_nh, "/demo_peac/vecPlane",
+                              "/t265/odom/sample");
   stairModeling.init();
 
   ros::spin();
