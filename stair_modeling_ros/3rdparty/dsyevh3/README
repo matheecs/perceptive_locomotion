@@ -1,0 +1,67 @@
+--------------------------------------------------------------------------
+Numerical diagonalization of hermitian 3x3 matrices
+--------------------------------------------------------------------------
+
+This set of algorithms is intended to numerically solve the eigenvalue and
+eigenvector problem for symmetric or hermitian 3x3 matrices.
+
+
+Installation
+------------
+
+The algorithms can not be used as standalone tools. They are intended
+to be copied into your own programs and used there according to your
+specific needs. The tarball that you have downloaded contains the main
+algorithm (zheevX3) as well as all required helper functions.
+
+If you have downloaded the complete library, the package also contains
+a sample Makefile to generate a shared library that can be linked dynamically.
+
+If you are using the C version of the code, please note that it follows
+the C99 standard, which includes the data type double complex and thus
+provides support for complex numbers. To correctly compile this code,
+you may have to use special compiler options. For the GNU C compiler,
+this option is -std=c99. If you intend to use a different compiler,
+please check its documentation for the appropriate settings.
+
+For optimum performance, we recommend switching on all optimizations
+provided by your compiler. For the GNU compilers, this is done by
+using the option -O3. To get an additional speed bonus, you might
+consider using options such as -ffast-math to enable faster, but
+non-standard floating point arithmetic. It should usually be safe to do
+so, but there is no experience on how the code performs under such
+circumstances.
+
+
+Terms of Use / License
+----------------------
+
+These algorithms are free software, covered by the GNU Lesser
+General Public License (see file COPYING). However, since they have
+been developed mainly for academic use, the author would appreciate
+being given academic credit for it. Whenever you use this software
+to produce a publication or talk, please cite the following reference:
+
+Joachim Kopp
+Numerical diagonalization of hermitian 3x3 matrices
+arXiv.org preprint: physics/0610206
+Int. J. Mod. Phys. C19 (2008) 523-548
+         
+
+Availability
+------------
+
+This software, as well as possible updates, is available from the
+following URL:
+   http://www.mpi-hd.mpg.de/personalhomes/globes/3x3/
+
+
+Bug reports / Contact
+---------------------
+   
+Although this software has been thoroughly tested, we cannot guarantee
+that it is free of bugs. Hence, bug reports, comments, and suggestions
+are always welcome. If you want to contact the author, you can do
+so under the following email-address:
+  jkopp@fnal.gov
+     
