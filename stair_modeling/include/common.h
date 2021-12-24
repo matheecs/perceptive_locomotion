@@ -65,6 +65,8 @@ struct Plane {
   pcl::ModelCoefficients coefficients;
   PointType center;
 
+  Eigen::Vector3f camera_position;
+
   float sx, sy, sz,   // sum of x/y/z
       sxx, syy, szz,  // sum of xx/yy/zz
       sxy, syz, sxz;  // sum of xy/yz/xz
@@ -130,14 +132,19 @@ struct Plane {
         Eigen::Map<Eigen::Matrix3f>(K[0], 3, 3));
     Eigen::Map<Eigen::Vector3f>(eigen_values, 3, 1) = es.eigenvalues();
     // below we need to specify row major since V!=V'
+    // the eigenvectors are normalized to have norm equal to 1
     Eigen::Map<Eigen::Matrix<float, 3, 3, Eigen::RowMajor>>(V[0], 3, 3) =
         es.eigenvectors();
 
     // coefficients
+    Eigen::Vector3f center_in_cam(camera_position(0) - center.x,
+                                  camera_position(1) - center.y,
+                                  camera_position(2) - center.z);
     coefficients.values.resize(4);
-    if (V[0][0] * center.x + V[1][0] * center.y + V[2][0] * center.z <=
-        0) {  // enforce dot(normal,center)<00 so normal always points towards
-              // camera
+    // enforce normal always towards camera
+    if (V[0][0] * center_in_cam(0) + V[1][0] * center_in_cam(1) +
+            V[2][0] * center_in_cam(2) >=
+        0) {
       coefficients.values[0] = V[0][0];
       coefficients.values[1] = V[1][0];
       coefficients.values[2] = V[2][0];

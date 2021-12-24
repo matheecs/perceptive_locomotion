@@ -266,11 +266,10 @@ void StairDetection::removeVerticalPoleSlopePlanes(
 }
 
 /*
- * sort planes by height
+ * sort planes by height from lowest to highest
  */
 void StairDetection::sortPlanesByHeight(std::vector<Plane> &vector_plane) {
   // this is very slow, due to heavey copy of data
-
   struct IndexCenter {
     int index;
     pcl::PointXYZ center;
@@ -552,6 +551,34 @@ void StairDetection::computePlanesMinMax(std::vector<Plane> &vector_plane) {
 }
 
 /*
+ * discard some planes which have unreasonable size
+ */
+void StairDetection::filterPlanesWithSizeConstraint(
+    std::vector<Plane> &vector_plane) {
+  for (auto &i : vector_plane) {
+    if (i.ptype == Plane::pstair_component) {
+      // length constraint
+      if (i.max[2] - i.min[2] < plane_min_length) {
+        i.ptype = Plane::others;
+        i.info = "{length < min_length}";
+      } else if (i.max[2] - i.min[2] > plane_max_length) {
+        i.ptype = Plane::others;
+        i.info = "{length > max_length}";
+      }
+
+      // width constraint
+      if (i.max[1] - i.min[1] < plane_min_width) {
+        i.ptype = Plane::others;
+        i.info = "{width < min_width}";
+      } else if (i.max[1] - i.min[1] > plane_max_width) {
+        i.ptype = Plane::others;
+        i.info = "{width > max_width}";
+      }
+    }
+  }
+}
+
+/*
  * compute the confuse matrix of each plane (for all the planes in current
  * frame)
  */
@@ -568,12 +595,16 @@ void StairDetection::computeConfuseMatrix(
       // compute matrix
       confuse_matrix[i][j].distance =
           minDistaceOfTwoCloud(vector_plane[i], vector_plane[j]);
-      confuse_matrix[i][j].delta_h =  // #TODO fix
-          fabs(vector_plane[i].center.x - vector_plane[j].center.x);
+      assert(vector_plane[j].center.z > vector_plane[i].center.z);
+      confuse_matrix[i][j].delta_h =
+          vector_plane[j].center.z - vector_plane[i].center.z;
       confuse_matrix[i][j].center_direction =
           Eigen::Vector3f(vector_plane[j].center.x - vector_plane[i].center.x,
                           vector_plane[j].center.y - vector_plane[i].center.y,
                           vector_plane[j].center.z - vector_plane[i].center.z);
+      // center direction ≈ forward direction
+      if (confuse_matrix[i][j].center_direction.dot(forward_direction) < 0)
+        confuse_matrix[i][j].center_direction *= -1.0;
     }
   }
 }
@@ -630,7 +661,8 @@ void StairDetection::findDominateVerticalPlaneNormal(
 
       PlaneNormalInfo plane_normal_info;
 
-      if (normal.dot(forward_diretion) < 0)
+      // normal of vertical plane is opposite to forward
+      if (normal.dot(forward_direction) < 0)
         plane_normal_info.normal = normal;
       else
         plane_normal_info.normal = -normal;
@@ -767,10 +799,10 @@ void StairDetection::findHorizontalPlaneDirection(
 
       PlaneNormalInfo plane_direction_info;
 
-      if (direction.dot(right_direction) < 0)
-        plane_direction_info.normal = -direction;
-      else
+      if (direction.dot(right_direction) > 0)
         plane_direction_info.normal = direction;
+      else
+        plane_direction_info.normal = -direction;
       plane_direction_info.plane_points_numbers = 0;  // not use
       plane_direction_info.eigen_value = sqrtf(i.eigen_values[2]);
 
@@ -894,16 +926,7 @@ bool StairDetection::refineKeyDirections(KeyInfo &keyInfo) {
         }
       }
 
-      // main_vertical_plane_normal should be close to
-      // estimated_vertical_plane_normal, if the angle are two large, it is
-      // possibly the horizontal plane are be cut due to bad camera view
       if (fabs(angle) > vertical_plane_normal_est_angle_th) {
-        // so, we check the vertical_plane_normal count, if the
-        // vertical_plane_normal is computed by more than one vertical plane,
-        // then we should trust vertical_plane_normal more than
-        // estimated_vertical_plane_normal; if the vertical_plane_normal are
-        // only estimated from one plane, we should trust
-        // horizontal_plane_direction more
         if (keyInfo.main_vertical_plane_normal.count >= 2) {
           keyInfo.horizontal_plane_direction.normal =
               keyInfo.main_vertical_plane_normal.normal.cross(down_direction);
@@ -933,6 +956,8 @@ void StairDetection::findDominateCenterDiffVector(
   // for all planes, compute delta_d
   for (size_t i = 0; i < vector_plane.size(); i++) {
     for (size_t j = i + 1; j < vector_plane.size(); j++) {
+      assert(keyInfo.main_vertical_plane_normal.normal.dot(
+                 confuse_matrix[i][j].center_direction) < 0);
       confuse_matrix[i][j].delta_d =
           fabs(keyInfo.main_vertical_plane_normal.normal.dot(
               confuse_matrix[i][j].center_direction));
@@ -965,23 +990,18 @@ void StairDetection::findDominateCenterDiffVector(
               keyInfo.horizontal_plane_direction.normal);
           angle_with_horizontal_plane_direction = acos(dot_product);
 
-          dot_product = normalized_cv_direction.dot(
-              keyInfo.main_vertical_plane_normal.normal);
-
-          // center vector direction angle with horizontal_plane_direction in 90
-          // degrees threshold the center vector direction should be
-          // perpendicular with horizontal_plane_direction
           if (fabs(M_PI / 2 - angle_with_horizontal_plane_direction) <
               cv_angle_horizontal_th) {
-            // the main_vertical_plane_normal are point to -y, but the
-            // cv_direction should point to y
+            dot_product = normalized_cv_direction.dot(
+                keyInfo.main_vertical_plane_normal.normal);
+            // direction of cv and vertical plane normal are opposite
+            assert(dot_product < 0);
             if (dot_product < 0) {
               PlaneNormalInfo cv_direction;
               cv_direction.normal = confuse_matrix[i][j].center_direction;
               cv_direction.weight = 1;
               cv_direction.eigen_value = 0;           // not use
               cv_direction.plane_points_numbers = 1;  // not use
-
               vec_main_center_diff_vectors.push_back(cv_direction);
             }
           }
@@ -1046,17 +1066,12 @@ void StairDetection::findDominateCenterDiffVector(
     main_center_diff_vector.normal = vec_cv_direction_clusters[0].normal;
     main_center_diff_vector.normal.normalize();
 
-    // refine main_center_diff_vector using horizontal_plane_direction
-    // the main_center_diff_vector should be prependiculr with
-    // horizontal_plane_direction sometimes the main_center_diff_vector maybe
-    // deflect from correct direction so we project current
-    // main_center_diff_vector to the plane of horizontal_plane_direction
+    // refine the main_center_diff_vector
     float prj_len = main_center_diff_vector.normal.dot(
         keyInfo.horizontal_plane_direction.normal);
     Eigen::Vector3f prj = prj_len * keyInfo.horizontal_plane_direction.normal;
     main_center_diff_vector.normal = main_center_diff_vector.normal - prj;
     main_center_diff_vector.normal.normalize();
-
     keyInfo.main_center_diff_vector = main_center_diff_vector;
   } else {
     PlaneNormalInfo empty_dir;
@@ -1078,6 +1093,7 @@ void StairDetection::filterPlanesWithKeyInfo(std::vector<Plane> &vector_plane,
 
       float dot_product =
           keyInfo.main_vertical_plane_normal.normal.dot(plane_normal);
+      assert(fabs(dot_product) <= 1.0);
       if (dot_product > 1)
         dot_product = 1;
       else if (dot_product < -1)
@@ -1095,35 +1111,6 @@ void StairDetection::filterPlanesWithKeyInfo(std::vector<Plane> &vector_plane,
 }
 
 /*
- * discard some planes which have unreasonable size
- */
-void StairDetection::filterPlanesWithSizeConstraint(
-    std::vector<Plane> &vector_plane) {
-  for (auto &i : vector_plane) {
-    if (i.ptype == Plane::pstair_component) {
-      // length constraint
-      if (i.max[2] - i.min[2] < plane_min_length) {
-        i.ptype = Plane::others;
-        i.info = "{length < min_length}";
-      } else if (i.max[2] - i.min[2] > plane_max_length) {
-        i.ptype = Plane::others;
-        i.info = "{length > max_length}";
-      }
-
-      // width constraint
-
-      if (i.max[1] - i.min[1] < plane_min_width) {
-        i.ptype = Plane::others;
-        i.info = "{width < min_width}";
-      } else if (i.max[1] - i.min[1] > plane_max_width) {
-        i.ptype = Plane::others;
-        i.info = "{width > max_width}";
-      }
-    }
-  }
-}
-
-/*
  * find all the connect plane fragments
  */
 void StairDetection::findConnectFragment(
@@ -1134,13 +1121,13 @@ void StairDetection::findConnectFragment(
     for (size_t j = i + 1; j < vector_plane.size(); j++) {
       if (vector_plane[i].ptype == Plane::pstair_component &&
           vector_plane[j].ptype == Plane::pstair_component) {
-        Eigen::Vector3f normal_i, normal_j;
-        normal_i[0] = vector_plane[i].coefficients.values[0];
-        normal_i[1] = vector_plane[i].coefficients.values[1];
-        normal_i[2] = vector_plane[i].coefficients.values[2];
-        normal_j[0] = vector_plane[j].coefficients.values[0];
-        normal_j[1] = vector_plane[j].coefficients.values[1];
-        normal_j[2] = vector_plane[j].coefficients.values[2];
+        /*  Eigen::Vector3f normal_i, normal_j;
+         normal_i[0] = vector_plane[i].coefficients.values[0];
+         normal_i[1] = vector_plane[i].coefficients.values[1];
+         normal_i[2] = vector_plane[i].coefficients.values[2];
+         normal_j[0] = vector_plane[j].coefficients.values[0];
+         normal_j[1] = vector_plane[j].coefficients.values[1];
+         normal_j[2] = vector_plane[j].coefficients.values[2]; */
 
         Eigen::Vector3f dir = confuse_matrix[i][j].center_direction;
         dir.normalize();
@@ -1163,8 +1150,6 @@ void StairDetection::findConnectFragment(
       }
     }
   }
-
-  int i = 0;
 }
 
 /*
@@ -1282,6 +1267,7 @@ void StairDetection::filterPlanesWithStairPlaneList(
  */
 void StairDetection::computeStairSidePlane(std::vector<Plane> &vector_plane,
                                            KeyInfo &keyInfo) {
+  // intercept is the D of Ax+By+Cz+D=0
   std::vector<float> vec_left_intercepts;
   std::vector<float> vec_right_intercepts;
 
@@ -1453,15 +1439,22 @@ bool StairDetection::modelingStair(std::vector<Plane> &vector_plane,
 
           /********************* virtual_virtcal_plane ********************/
 
-          // find the front point of the upper plane
-          findMinMaxProjPoint(vector_plane[index],
-                              keyInfo.main_vertical_plane_normal.normal, tmp,
-                              point_h1, min_p, max_p);
+          // find the front/back point of the virtual virtcal plane
+          // #TODO fix need to consider two conditions: up or down stairs
+          if (keyInfo.main_center_diff_vector.normal.dot(-1 * down_direction) >
+              0) {
+            findMinMaxProjPoint(vector_plane[index],
+                                keyInfo.main_vertical_plane_normal.normal, tmp,
+                                point_h1, min_p, max_p);
+          } else {
+            findMinMaxProjPoint(vector_plane[index],
+                                keyInfo.main_vertical_plane_normal.normal,
+                                point_h1, tmp, min_p, max_p);
+          }
 
-          // #TODO fix
           virtual_virtcal_plane.center.x = point_h1.x;
           virtual_virtcal_plane.center.y = point_h1.y;
-          virtual_virtcal_plane.center.z = point_h1.z;
+          virtual_virtcal_plane.center.z = point_h1.z;  // #TODO fix minus h/2?
 
           // compute the coefficients of virtual vertical plane
           float d = -point_h1.x * keyInfo.main_vertical_plane_normal.normal[0] -
@@ -1520,8 +1513,9 @@ bool StairDetection::modelingStair(std::vector<Plane> &vector_plane,
           p_step->step.line = line2;
           p_step->step.count = ++count;
 
+          assert(p_step->step.line.h > p_concaveline->concave_line.line.h);
           p_step->step.height =
-              fabs(p_step->step.line.h - p_concaveline->concave_line.line.h);
+              p_step->step.line.h - p_concaveline->concave_line.line.h;
           p_step->step.good_h = true;
 
           stair.pushBack(p_step);
@@ -1607,15 +1601,16 @@ bool StairDetection::modelingStair(std::vector<Plane> &vector_plane,
       p_step->step.count = ++count;
 
       if (prev_concave_line) {
-        p_step->step.height =
-            fabs(line.h - prev_concave_line->concave_line.line.h);
+        assert(line.h > prev_concave_line->concave_line.line.h);
+        p_step->step.height = line.h - prev_concave_line->concave_line.line.h;
       } else {
         PointType point_max, point_min;
         float min_p, max_p;
         findMinMaxProjPoint(vector_plane[index], down_direction, point_min,
                             point_max, min_p, max_p);
         // #TODO fix
-        p_step->step.height = fabs(point_max.x - line.h);
+        assert(line.h > point_max.z);
+        p_step->step.height = line.h - point_max.z;
         p_step->step.good_h = false;
       }
 
@@ -1628,15 +1623,23 @@ bool StairDetection::modelingStair(std::vector<Plane> &vector_plane,
       PointType point_h0, point_h1, tmp;
       float min_p, max_p;
 
-      // find the back point of the lower plane
-      findMinMaxProjPoint(vector_plane[index],
-                          keyInfo.main_vertical_plane_normal.normal, point_h0,
-                          tmp, min_p, max_p);
-
-      // find the front point of the upper plane
-      findMinMaxProjPoint(vector_plane[index_next],
-                          keyInfo.main_vertical_plane_normal.normal, tmp,
-                          point_h1, min_p, max_p);
+      if (keyInfo.main_center_diff_vector.normal.dot(-1 * down_direction) > 0) {
+        // case: up stairs
+        findMinMaxProjPoint(vector_plane[index],
+                            keyInfo.main_vertical_plane_normal.normal, point_h0,
+                            tmp, min_p, max_p);
+        findMinMaxProjPoint(vector_plane[index_next],
+                            keyInfo.main_vertical_plane_normal.normal, tmp,
+                            point_h1, min_p, max_p);
+      } else {
+        // case: down stairs
+        findMinMaxProjPoint(vector_plane[index],
+                            keyInfo.main_vertical_plane_normal.normal, tmp,
+                            point_h0, min_p, max_p);
+        findMinMaxProjPoint(vector_plane[index_next],
+                            keyInfo.main_vertical_plane_normal.normal, point_h1,
+                            tmp, min_p, max_p);
+      }
 
       // compute center point of virtual vertical plane
       float cx, cy, cz;
@@ -1926,9 +1929,10 @@ void StairDetection::computeLineFrom2Planes(
   line.coeff.values.push_back(normal_line[1]);
   line.coeff.values.push_back(normal_line[2]);
 
-  line.h = fabs(Eigen::Vector3f(x, y, z).dot(down_direction));
-  line.d = fabs(
-      Eigen::Vector3f(x, y, z).dot(keyInfo.main_vertical_plane_normal.normal));
+  // #TODO fix may can not work for multi-floor environment
+  line.h = z;
+  line.d =
+      Eigen::Vector3f(x, y, z).dot(keyInfo.main_vertical_plane_normal.normal);
 }
 
 inline void StairDetection::crossPointOfLineAndPlane(
@@ -2042,9 +2046,19 @@ void StairDetection::computePlaneCounter(Stair &stair, KeyInfo &keyInfo) {
           PointType max_point, min_point;
           // 找点云在 main_vertical_plane_normal 方向上的最远点和最近点
           float max_prj, min_prj;
-          findMinMaxProjPoint(*pstep->step.plane_h,
-                              keyInfo.main_vertical_plane_normal.normal,
-                              min_point, max_point, min_prj, max_prj);
+          if (keyInfo.main_center_diff_vector.normal.dot(-1 * down_direction) >
+              0) {
+            // case: up stairs
+            findMinMaxProjPoint(*pstep->step.plane_h,
+                                keyInfo.main_vertical_plane_normal.normal,
+                                min_point, max_point, min_prj, max_prj);
+          } else {
+            // case: down stairs
+            findMinMaxProjPoint(*pstep->step.plane_h,
+                                keyInfo.main_vertical_plane_normal.normal,
+                                min_point, max_point, min_prj, max_prj);
+            min_point = max_point;
+          }
 
           // 后侧交点
           float xb, yb, zb, nbx, nby, nbz;
@@ -2082,9 +2096,17 @@ void StairDetection::computePlaneCounter(Stair &stair, KeyInfo &keyInfo) {
         PointType max_point, min_point;
         float max_prj, min_prj;
         // 找点云在 main_vertical_plane_normal 方向上的最远点和最近点
-        findMinMaxProjPoint(*pline->concave_line.plane_h,
-                            keyInfo.main_vertical_plane_normal.normal,
-                            min_point, max_point, min_prj, max_prj);
+        if (keyInfo.main_center_diff_vector.normal.dot(-1 * down_direction) >
+            0) {
+          findMinMaxProjPoint(*pline->concave_line.plane_h,
+                              keyInfo.main_vertical_plane_normal.normal,
+                              min_point, max_point, min_prj, max_prj);
+        } else {
+          findMinMaxProjPoint(*pline->concave_line.plane_h,
+                              keyInfo.main_vertical_plane_normal.normal,
+                              min_point, max_point, min_prj, max_prj);
+          max_point = min_point;
+        }
 
         // 前侧交点
         float xf, yf, zf, nfx, nfy, nfz;

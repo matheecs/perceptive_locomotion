@@ -10,6 +10,7 @@ find_package(
   COMPONENTS dynamic_reconfigure
              plane_msg
              roscpp
+             message_filters
              sensor_msgs
              geometry_msgs
              std_msgs

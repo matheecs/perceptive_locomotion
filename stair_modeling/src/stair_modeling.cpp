@@ -2,6 +2,10 @@
 #include <geometry_msgs/Point32.h>
 #include <geometry_msgs/PolygonStamped.h>
 #include <jsk_recognition_msgs/PolygonArray.h>
+#include <message_filters/subscriber.h>
+#include <message_filters/sync_policies/approximate_time.h>
+#include <message_filters/sync_policies/exact_time.h>
+#include <message_filters/time_synchronizer.h>
 #include <nav_msgs/Odometry.h>
 #include <pcl/common/common.h>
 #include <pcl/point_cloud.h>
@@ -53,10 +57,15 @@ class StairModeling {
   void init() {
     ROS_INFO("############# StairModeling start #############");
 
-    sub_vec_plane = private_nh.subscribe(topicVecPlane, queueSize,
-                                         &StairModeling::callback, this);
-    sub_t265_odom = private_nh.subscribe(topicOdom, queueSize,
-                                         &StairModeling::odom_callback, this);
+    sub_vec_plane.reset(new message_filters::Subscriber<plane_msg::VecPlane>(
+        private_nh, topicVecPlane, 10));
+    sub_t265_odom.reset(new message_filters::Subscriber<nav_msgs::Odometry>(
+        private_nh, topicOdom, 100));
+    sync_plane_odom.reset(
+        new message_filters::Synchronizer<SyncPolicyPlaneOdom>(
+            SyncPolicyPlaneOdom(100), *sub_vec_plane, *sub_t265_odom));
+    sync_plane_odom->registerCallback(
+        boost::bind(&StairModeling::planeOdomCallback, this, _1, _2));
 
     f = boost::bind(&StairModeling::cfg_callback, this, _1, _2);
     server->setCallback(f);
@@ -133,50 +142,7 @@ class StairModeling {
     time_window = config.time_window;
   }
 
-  void odom_callback(const nav_msgs::OdometryConstPtr &odom) {
-    // Get d400 pose in world (t265 as body)
-    Eigen::Quaternionf body_rotation_q = Eigen::Quaternionf(
-        odom->pose.pose.orientation.w, odom->pose.pose.orientation.x,
-        odom->pose.pose.orientation.y, odom->pose.pose.orientation.z);
-    Eigen::Matrix3f body_rotation_m = body_rotation_q.toRotationMatrix();
-    Eigen::Matrix4f body2world;  // from world to body
-    body2world.block<3, 3>(0, 0) = body_rotation_m;
-    body2world(0, 3) = odom->pose.pose.position.x;
-    body2world(1, 3) = odom->pose.pose.position.y;
-    body2world(2, 3) = odom->pose.pose.position.z;
-    body2world(3, 3) = 1.0;
-
-    Eigen::Matrix4f cam2body;  // from body to cam
-    Eigen::Quaternionf cam2body_rotation_q = Eigen::Quaternionf(1, 0, 0, 0);
-    cam2body.block<3, 3>(0, 0) = cam2body_rotation_q.toRotationMatrix();
-    cam2body(0, 3) = -0.009375589;
-    cam2body(1, 3) = 0.015890727;
-    cam2body(2, 3) = 0.028273059;
-    cam2body(3, 3) = 1.0;
-
-    Eigen::Matrix4f cam_world = body2world * cam2body;
-    Eigen::Vector3f camera_pos;
-    camera_pos(0) = cam_world(0, 3);
-    camera_pos(1) = cam_world(1, 3);
-    camera_pos(2) = cam_world(2, 3);
-    Eigen::Quaternionf camera_rotation_q =
-        Eigen::Quaternionf(cam_world.block<3, 3>(0, 0));
-
-    // update down_direction, right_direction, forward_diretion
-    stair_detector.down_direction = Eigen::Vector3f(0, 0, -1);
-
-    float yaw = fromQuaternion2yaw(camera_rotation_q);
-    Eigen::Quaternionf q = Eigen::AngleAxisf(yaw, Eigen::Vector3f::UnitZ()) *
-                           Eigen::AngleAxisf(0, Eigen::Vector3f::UnitY()) *
-                           Eigen::AngleAxisf(0, Eigen::Vector3f::UnitX());
-    stair_detector.forward_diretion =
-        q.toRotationMatrix() * Eigen::Vector3f(1, 0, 0);
-
-    stair_detector.right_direction =
-        stair_detector.down_direction.cross(stair_detector.forward_diretion);
-    stair_detector.right_direction.normalize();
-  }
-
+  // Do not use Eigen
   float fromQuaternion2yaw(Eigen::Quaternionf q) {
     float yaw =
         atan2(2 * (q.x() * q.y() + q.w() * q.z()),
@@ -184,7 +150,53 @@ class StairModeling {
     return yaw;
   }
 
-  void callback(const plane_msg::VecPlane::ConstPtr &pvec_plane) {
+  void planeOdomCallback(const plane_msg::VecPlane::ConstPtr &pvec_plane,
+                         const nav_msgs::OdometryConstPtr &odom) {
+    Eigen::Vector3f camera_position;
+
+    // Step1 get pose of camera
+    {
+      Eigen::Quaternionf body_rotation_q = Eigen::Quaternionf(
+          odom->pose.pose.orientation.w, odom->pose.pose.orientation.x,
+          odom->pose.pose.orientation.y, odom->pose.pose.orientation.z);
+      Eigen::Matrix3f body_rotation_m = body_rotation_q.toRotationMatrix();
+      Eigen::Matrix4f body2world;  // from world to body
+      body2world.block<3, 3>(0, 0) = body_rotation_m;
+      body2world(0, 3) = odom->pose.pose.position.x;
+      body2world(1, 3) = odom->pose.pose.position.y;
+      body2world(2, 3) = odom->pose.pose.position.z;
+      body2world(3, 3) = 1.0;
+
+      Eigen::Matrix4f cam2body;  // from body to cam
+      Eigen::Quaternionf cam2body_rotation_q = Eigen::Quaternionf(1, 0, 0, 0);
+      cam2body.block<3, 3>(0, 0) = cam2body_rotation_q.toRotationMatrix();
+      cam2body(0, 3) = -0.009375589;
+      cam2body(1, 3) = 0.015890727;
+      cam2body(2, 3) = 0.028273059;
+      cam2body(3, 3) = 1.0;
+
+      Eigen::Matrix4f cam_world = body2world * cam2body;
+      camera_position(0) = cam_world(0, 3);
+      camera_position(1) = cam_world(1, 3);
+      camera_position(2) = cam_world(2, 3);
+      Eigen::Quaternionf camera_rotation_q =
+          Eigen::Quaternionf(cam_world.block<3, 3>(0, 0));
+
+      // update down_direction, right_direction, forward_direction
+      stair_detector.down_direction = Eigen::Vector3f(0, 0, -1);
+
+      float yaw = fromQuaternion2yaw(camera_rotation_q);
+      Eigen::Quaternionf q = Eigen::AngleAxisf(yaw, Eigen::Vector3f::UnitZ()) *
+                             Eigen::AngleAxisf(0, Eigen::Vector3f::UnitY()) *
+                             Eigen::AngleAxisf(0, Eigen::Vector3f::UnitX());
+      stair_detector.forward_direction =
+          q.toRotationMatrix() * Eigen::Vector3f(1, 0, 0);
+
+      stair_detector.right_direction =
+          stair_detector.down_direction.cross(stair_detector.forward_direction);
+      stair_detector.right_direction.normalize();
+    }
+    // Step2 stair modeling
     std::vector<double> vectime;
 
     count++;
@@ -196,7 +208,7 @@ class StairModeling {
 
       auto t1 = system_clock::now();
 
-      convertCloud(*pvec_plane, vsp_plane);
+      convertCloud(*pvec_plane, vsp_plane, camera_position);
 
       auto t2 = system_clock::now();
       auto duration = duration_cast<microseconds>(t2 - t1);
@@ -239,13 +251,15 @@ class StairModeling {
   }
 
   void convertCloud(const plane_msg::VecPlane &vec_plane,
-                    std::vector<stair_perception::Plane> &vsp_plane) {
+                    std::vector<stair_perception::Plane> &vsp_plane,
+                    Eigen::Vector3f camera_position) {
     unsigned long plane_number = vec_plane.vecPlane.size();
     vsp_plane.resize(plane_number);
 
     for (size_t i = 0; i < plane_number; i++) {
       pcl::fromROSMsg(vec_plane.vecPlane[i].cloud, vsp_plane[i].cloud);
 
+      vsp_plane[i].camera_position = camera_position;
       vsp_plane[i].computeStatistics();
       vsp_plane[i].computePlaneInfo();
     }
@@ -390,8 +404,16 @@ class StairModeling {
   ros::NodeHandle private_nh;
   std::string topicVecPlane;
   std::string topicOdom;
-  ros::Subscriber sub_vec_plane;
-  ros::Subscriber sub_t265_odom;
+
+  typedef message_filters::sync_policies::ApproximateTime<plane_msg::VecPlane,
+                                                          nav_msgs::Odometry>
+      SyncPolicyPlaneOdom;
+  typedef shared_ptr<message_filters::Synchronizer<SyncPolicyPlaneOdom>>
+      SynchronizerPlaneOdom;
+  shared_ptr<message_filters::Subscriber<plane_msg::VecPlane>> sub_vec_plane;
+  shared_ptr<message_filters::Subscriber<nav_msgs::Odometry>> sub_t265_odom;
+  SynchronizerPlaneOdom sync_plane_odom;
+
   ros::Publisher pub_stair_info, pub_stair_poly;
 
   std::vector<stair_perception::Plane> vsp_plane;

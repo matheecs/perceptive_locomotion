@@ -61,7 +61,7 @@ class StairDetection {
  public:
   /********************** run time parameters ****************************/
   // the down direction and ref right direction which parallel with gravity
-  Eigen::Vector3f down_direction, right_direction, forward_diretion;
+  Eigen::Vector3f down_direction, right_direction, forward_direction;
 
  private:
   // remain point number of each plane after random down sample
@@ -129,7 +129,7 @@ class StairDetection {
   StairDetection()
       : down_direction(Eigen::Vector3f(0, 0, -1)),
         right_direction(Eigen::Vector3f(0, -1, 0)),
-        forward_diretion(Eigen::Vector3f(1, 0, 0)),
+        forward_direction(Eigen::Vector3f(1, 0, 0)),
         down_sample_points_number(200),
         angle_h(pcl::deg2rad(10.0)),
         angle_v(pcl::deg2rad(70.0)),
