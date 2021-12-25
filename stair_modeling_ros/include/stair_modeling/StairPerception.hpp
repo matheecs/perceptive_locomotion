@@ -1,14 +1,13 @@
 #ifndef STAIRPERCEPTION_HPP_
 #define STAIRPERCEPTION_HPP_
 
-#include <common.h>
 #include <ros/ros.h>
 #include <time.h>
 
 #include <chrono>
 
-#include "../common.h"
 #include "Stair.hpp"
+#include "common.h"
 
 using namespace std;
 using namespace std::chrono;

@@ -1,7 +1,7 @@
 #ifndef STAIR_HPP_
 #define STAIR_HPP_
 
-#include "../common.h"
+#include "common.h"
 
 namespace stair_perception {
 class Line {
