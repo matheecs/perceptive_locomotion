@@ -10,7 +10,6 @@ find_package(
   COMPONENTS dynamic_reconfigure
              cv_bridge
              image_transport
-             plane_msg
              roscpp
              message_filters
              sensor_msgs
