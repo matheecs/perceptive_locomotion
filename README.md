@@ -1,4 +1,4 @@
-![](doc/stairs.jpg)
+![Frames of stair modeling](doc/stairs.jpg)
 
 ### TODO
 
@@ -10,3 +10,15 @@
   - [ ] 相机点云降采样再发布
 - [ ] 面特征 vs 线特征 from depth images
 - [ ] 噪声
+
+### Package lists
+
+| name                   | function          |
+| ---------------------- | ----------------- |
+| **local_grid**         | 局部地图          |
+| peac_ros               | 平面检测          |
+| plane_msg              | 平面消息          |
+| realsense-ros          | 相机驱动          |
+| stair_info_msg         | 楼梯消息          |
+| stair_modeling         | 楼梯建模          |
+| **stair_modeling_ros** | 平面检测+楼梯建模 |
