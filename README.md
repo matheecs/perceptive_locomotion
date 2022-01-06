@@ -1,5 +1,3 @@
-![Frames of stair modeling](doc/stairs.jpg)
-
 ### TODO
 
 - [ ] 下楼梯显示异常
@@ -13,12 +11,26 @@
 
 ### Package lists
 
-| name                   | function          |
-| ---------------------- | ----------------- |
-| **local_grid**         | 局部地图          |
-| peac_ros               | 平面检测          |
-| plane_msg              | 平面消息          |
-| realsense-ros          | 相机驱动          |
-| stair_info_msg         | 楼梯消息          |
-| stair_modeling         | 楼梯建模          |
-| **stair_modeling_ros** | 平面检测+楼梯建模 |
+| name                   | function                         |
+| ---------------------- | -------------------------------- |
+| LIP_demo               | LIP结合Capture Point做落脚点规划 |
+| **local_grid**         | 局部地图                         |
+| peac_ros               | 平面检测                         |
+| plane_msg              | 平面消息                         |
+| realsense-ros          | 相机驱动                         |
+| stair_info_msg         | 楼梯消息                         |
+| stair_modeling         | 楼梯建模                         |
+| **stair_modeling_ros** | 平面检测结合楼梯建模             |
+
+### Stairs Modeling
+
+<p align="center">
+  <img src="doc/stairs.jpg" width="500"/>
+</p>
+
+### Control Framework
+
+<p align="center">
+  <img src="doc/planning.jpg" width="500"/>
+</p>
+
