@@ -5,7 +5,7 @@ from math import cosh
 import numpy as np
 
 # Deinition of Linear Inverted Pendulum
-class LIPM:
+class LIPM_2D:
     def __init__(self, x0 = 0, v0 = 0, z0 = 1, delta_t = 0.001):
         self.x0 = x0
         self.v0 = v0 
@@ -85,5 +85,5 @@ if __name__ == '__main__':
     v0 = 2.0
     z0 = 1.0
     delta_t = 0.01
-    LIPM_model = LIPM(x0, v0, z0, delta_t) # x0, v0, z, delta_t
+    LIPM_model = LIPM_2D(x0, v0, z0, delta_t) # x0, v0, z, delta_t
     LIPM_model.target_orbital_energy = 0.0

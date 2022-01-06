@@ -2,7 +2,7 @@
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
-from LIPM import LIPM
+from LIPM_2D import LIPM_2D
 
 # functions definition for animation
 def initAnimation():
@@ -29,7 +29,7 @@ x0 = -1.0
 v0 = 3.5
 z0 = 1.0
 delta_t = 0.02
-LIPM_model = LIPM(x0, v0, z0, delta_t) # x0, v0, z, delta_t
+LIPM_model = LIPM_2D(x0, v0, z0, delta_t) # x0, v0, z, delta_t
 
 data_len = 60
 orbital_energy_array = list()
