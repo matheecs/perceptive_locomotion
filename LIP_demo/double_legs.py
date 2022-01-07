@@ -58,10 +58,10 @@ v0 = 0.6
 z0 = 0.6
 delta_t = 0.02
 LIPM_model = LIPM_2D(x0, v0, z0, delta_t)  # x0, v0, z, delta_t
-LIPM_model.target_orbital_energy = 0.4
+LIPM_model.target_orbital_energy = 0.2
 
 data_len = 200
-switch_index = 15
+switch_index = 18
 
 orbital_energy_array = list()
 xt_array = list()
@@ -145,32 +145,30 @@ for i in range(1, data_len + 1):
 
 # plot the animation
 fig = plt.figure(figsize=(12, 6))
-ax = fig.add_subplot(411, autoscale_on=False, xlim=(-1, 9), ylim=(-0.1, 0.8))
-# ax.set_aspect('equal')
-ax.grid(ls="--")
 
+ax = fig.add_subplot(411, autoscale_on=False, xlim=(-1, 9), ylim=(-0.1, 0.8))
+ax.grid(ls="--")
 (LIPM_left_leg_ani,) = ax.plot([], [], "o-", lw=4, color="b")
 (LIPM_right_leg_ani,) = ax.plot([], [], "o-", lw=4, color="k")
 (LIPM_COM_ani,) = ax.plot(COM_x[0], COM_z[0], marker="o", markersize=20, color="r")
-
 COM_str = "COM = (%.1f, %.1f)"
 COM_pos = ax.text(0.05, 0.9, "", transform=ax.transAxes)
 
-bx = fig.add_subplot(412, autoscale_on=False, xlim=(0, data_len), ylim=(-0.8, 0.8))
+bx = fig.add_subplot(412, autoscale_on=True)
 bx.grid(ls="--")
 bx.plot(xt_array)
 (xt_point_ani,) = bx.plot(0, xt_array[0], marker="o", color="r")
 plt.xlabel("time (s)")
 plt.ylabel("COM position x")
 
-cx = fig.add_subplot(413, autoscale_on=False, xlim=(0, data_len), ylim=(0, 2))
+cx = fig.add_subplot(413, autoscale_on=True)
 cx.grid(ls="--")
 cx.plot(vt_array)
 (vt_point_ani,) = cx.plot(0, vt_array[0], marker="o", color="r")
 plt.xlabel("time (s)")
 plt.ylabel("COM velocity")
 
-dx = fig.add_subplot(414, autoscale_on=False, xlim=(-0.5, 0.5), ylim=(0, 2))
+dx = fig.add_subplot(414, autoscale_on=True)
 dx.grid(ls="--")
 dx.plot(xt_array, vt_array)
 (xvt_point_ani,) = dx.plot(xt_array[0], vt_array[0], marker="o", color="r")
