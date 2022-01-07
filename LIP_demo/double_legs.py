@@ -175,6 +175,6 @@ ani_LIPM = animation.FuncAnimation(
     interval=1.0 / delta_t,
     blit=True,
 )
-ani_LIPM.save("LIPM_double_legs.gif", writer="imagemagick")
 
+# ani_LIPM.save("LIPM_double_legs.gif", writer="imagemagick")
 plt.show()

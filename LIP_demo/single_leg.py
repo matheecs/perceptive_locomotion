@@ -75,5 +75,6 @@ ani = animation.FuncAnimation(
     interval=1.0 / delta_t,
     blit=True,
 )
+
 # ani.save("LIPM_single_leg.gif", writer="imagemagick")  # save the animation to files
 plt.show()
