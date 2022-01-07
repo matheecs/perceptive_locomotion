@@ -9,8 +9,11 @@
 
 ## 2D LIP
 
-| Specification | Value   |
-| ------------- | ------- |
-| Default Speed | 0.6 m/s |
-| Height        | 0.6 m   |
-| Mass          | 30 kg   |
+| Specification  | Value   |
+| -------------- | ------- |
+| Default Speed  | 0.6 m/s |
+| Height         | 0.6 m   |
+| Mass           | 30 kg   |
+| Swing during   | 350 ms  |
+| Step length    | 0.21 m  |
+| Orbital Energy | 0.2     |
