@@ -6,7 +6,7 @@ import numpy as np
 
 # Deinition of Linear Inverted Pendulum
 class LIPM_2D:
-    def __init__(self, x0=0, v0=0, z0=0.61, delta_t=0.001):
+    def __init__(self, x0=0, v0=0.64, z0=0.6, delta_t=0.02):
         self.x0 = x0
         self.v0 = v0
         self.z0 = z0
@@ -58,7 +58,7 @@ class LIPM_2D:
 
     # update the capture point associated with the target orbital energy
     def updateCapturePoint(self, xt, vt, target_OE):
-        if vt ** 2 < 2 * target_OE:
+        if vt ** 2 * 0.5 < target_OE:
             capture_point = self.capture_point
             print(
                 "warning: calculate the capture point failed, the velocity is too low. caputre_point=",
@@ -87,9 +87,4 @@ class LIPM_2D:
 
 
 if __name__ == "__main__":
-    x0 = 0.0
-    v0 = 2.0
-    z0 = 1.0
-    delta_t = 0.02
-    LIPM_model = LIPM_2D(x0, v0, z0, delta_t)  # x0, v0, z, delta_t
-    LIPM_model.target_orbital_energy = 0.0
+    pass

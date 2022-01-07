@@ -33,8 +33,12 @@ def animate(index):
     right_leg_x = [COM_x[index], right_foot_x_array[index]]
     right_leg_y = [COM_z[index], right_foot_z_array[index]]
 
-    LIPM_left_leg_ani.set_data(left_leg_x, left_leg_y)
-    LIPM_right_leg_ani.set_data(right_leg_x, right_leg_y)
+    if left_foot_support_state[index]:
+        LIPM_left_leg_ani.set_data(left_leg_x, left_leg_y)
+        LIPM_right_leg_ani.set_data([], [])
+    else:
+        LIPM_left_leg_ani.set_data([], [])
+        LIPM_right_leg_ani.set_data(right_leg_x, right_leg_y)
     LIPM_COM_ani.set_data(COM_x[index], COM_z[index])
     COM_pos.set_text(COM_str % (COM_x[index], COM_z[index]))
 
@@ -54,13 +58,13 @@ def animate(index):
 
 
 x0 = 0
-v0 = 0.6
+v0 = 0.64
 z0 = 0.6
 delta_t = 0.02
-LIPM_model = LIPM_2D(x0, v0, z0, delta_t)  # x0, v0, z, delta_t
+LIPM_model = LIPM_2D(x0, v0, z0, delta_t)
 LIPM_model.target_orbital_energy = 0.2
 
-data_len = 200
+data_len = 100
 switch_index = 18
 
 orbital_energy_array = list()
@@ -72,10 +76,11 @@ left_foot_x_array = list()
 left_foot_z_array = list()
 right_foot_x_array = list()
 right_foot_z_array = list()
+left_foot_support_state = list()
 
 j = 0
 swing_foot_reference_x = [0]
-for i in range(1, data_len + 1):
+for i in range(int(switch_index / 2) + 1, data_len + 1):
     LIPM_model.update()
 
     if i <= switch_index:  # first step
@@ -141,37 +146,41 @@ for i in range(1, data_len + 1):
     right_foot_x_array.append(LIPM_model.right_foot_x)
     right_foot_z_array.append(LIPM_model.right_foot_z)
     orbital_energy_array.append(LIPM_model.orbital_energy)
+    if LIPM_model.support_leg == "left_leg":
+        left_foot_support_state.append(True)
+    else:
+        left_foot_support_state.append(False)
 
 
 # plot the animation
 fig = plt.figure(figsize=(12, 6))
 
-ax = fig.add_subplot(411, autoscale_on=False, xlim=(-1, 9), ylim=(-0.1, 0.8))
+ax = fig.add_subplot(411, autoscale_on=False, xlim=(-0.5, 2), ylim=(-0.1, 0.8))
 ax.grid(ls="--")
 (LIPM_left_leg_ani,) = ax.plot([], [], "o-", lw=4, color="b")
 (LIPM_right_leg_ani,) = ax.plot([], [], "o-", lw=4, color="k")
-(LIPM_COM_ani,) = ax.plot(COM_x[0], COM_z[0], marker="o", markersize=20, color="r")
+(LIPM_COM_ani,) = ax.plot([], [], marker="o", markersize=20, color="r")
 COM_str = "COM = (%.1f, %.1f)"
 COM_pos = ax.text(0.05, 0.9, "", transform=ax.transAxes)
 
 bx = fig.add_subplot(412, autoscale_on=True)
 bx.grid(ls="--")
 bx.plot(xt_array)
-(xt_point_ani,) = bx.plot(0, xt_array[0], marker="o", color="r")
+(xt_point_ani,) = bx.plot([], [], marker="o", color="r")
 plt.xlabel("time (s)")
 plt.ylabel("COM position x")
 
 cx = fig.add_subplot(413, autoscale_on=True)
 cx.grid(ls="--")
 cx.plot(vt_array)
-(vt_point_ani,) = cx.plot(0, vt_array[0], marker="o", color="r")
+(vt_point_ani,) = cx.plot([], [], marker="o", color="r")
 plt.xlabel("time (s)")
 plt.ylabel("COM velocity")
 
 dx = fig.add_subplot(414, autoscale_on=True)
 dx.grid(ls="--")
 dx.plot(xt_array, vt_array)
-(xvt_point_ani,) = dx.plot(xt_array[0], vt_array[0], marker="o", color="r")
+(xvt_point_ani,) = dx.plot([], [], marker="o", color="r")
 plt.xlabel("x")
 plt.ylabel("v")
 
@@ -180,10 +189,10 @@ ani_LIPM = animation.FuncAnimation(
     fig=fig,
     init_func=initAnimation,
     func=animate,
-    frames=range(1, data_len),
+    frames=range(1, data_len - int(switch_index / 2)),
     interval=1.0 / delta_t,
     blit=True,
 )
 
-# ani_LIPM.save("step_path_planning.gif", writer="imagemagick")
+ani_LIPM.save("step_path_planning.gif", writer="imagemagick")
 plt.show()
