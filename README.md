@@ -30,7 +30,22 @@
 
 ### Control Framework
 
+**From Coarse to Fine: Robust Hierarchical Control for a Quadruped Robot**
+
 <p align="center">
-  <img src="doc/planning.jpg" width="500"/>
+  <img src="doc/models.jpg" width="500"/>
 </p>
 
+### Step Replanning
+
+**Step Path**
+
+<p align="center">
+  <img src="doc/step_replanning.jpg" width="500"/>
+</p>
+
+**Implementation Details**
+
+<p align="center">
+  <img src="doc/annotate.jpg" width="500"/>
+</p>
