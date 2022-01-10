@@ -42,7 +42,7 @@ class LIPM:
         else:
             return True
 
-    def showStep(self, result_list):  # [[l1,l2,l3],[x1_0,x2_0,x3_0]]
+    def showStepPath(self, result_list):  # [[l1,l2,l3],[x1_0,x2_0,x3_0]]
         assert len(result_list) == 2
 
         # draw COM and foot
@@ -236,6 +236,6 @@ if __name__ == "__main__":
     print("Time:", stop - start)
 
     if mini_cost < float("inf"):
-        model.showStep(result_list)
+        model.showStepPath(result_list)
     else:
         print("No step path!")
