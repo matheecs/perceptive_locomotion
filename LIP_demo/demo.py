@@ -194,5 +194,5 @@ ani_LIPM = animation.FuncAnimation(
     blit=True,
 )
 
-ani_LIPM.save("step_path_planning.gif", writer="imagemagick")
+# ani_LIPM.save("LIPM_2D_demo.gif", writer="imagemagick")
 plt.show()
