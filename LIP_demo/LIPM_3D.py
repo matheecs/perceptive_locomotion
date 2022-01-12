@@ -85,12 +85,12 @@ class LIPM_3D:
         return x_t, vx_t, y_t, vy_t
 
     def nextReferenceFootLocation(self, s_x, s_y, theta=0):
-        if self.support_leg == "left_leg":  # then the next support leg is the right leg
+        if self.support_leg == "left_leg":
+            # then the next support leg is the right leg
             p_x_new = self.p_x + np.cos(theta) * s_x - np.sin(theta) * s_y
             p_y_new = self.p_y + np.sin(theta) * s_x + np.cos(theta) * s_y
-        elif (
-            self.support_leg == "right_leg"
-        ):  # then the next support leg is the left leg
+        elif self.support_leg == "right_leg":
+            # then the next support leg is the left leg
             p_x_new = self.p_x + np.cos(theta) * s_x + np.sin(theta) * s_y
             p_y_new = self.p_y + np.sin(theta) * s_x - np.cos(theta) * s_y
 

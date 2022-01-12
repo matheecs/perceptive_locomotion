@@ -169,7 +169,7 @@ LIPM_model = LIPM_3D(dt=delta_t, T_sup=0.5)
 LIPM_model.initializeModel(COM_pos_0, left_foot_pos, right_foot_pos)
 
 LIPM_model.support_leg = "left_leg"  # set the support leg to right leg in next step
-if LIPM_model.support_leg is "left_leg":
+if LIPM_model.support_leg == "left_leg":
     support_foot_pos = LIPM_model.left_foot_pos
     LIPM_model.p_x = LIPM_model.left_foot_pos[0]
     LIPM_model.p_y = LIPM_model.left_foot_pos[1]
@@ -200,7 +200,7 @@ for i in range(int(total_time / delta_t)):
     LIPM_model.step()
 
     if step_num >= 1:
-        if LIPM_model.support_leg is "left_leg":
+        if LIPM_model.support_leg == "left_leg":
             LIPM_model.right_foot_pos = [
                 swing_foot_pos[j, 0],
                 swing_foot_pos[j, 1],
@@ -239,7 +239,7 @@ for i in range(int(total_time / delta_t)):
         if step_num >= 10:
             s_y = 0.0
 
-        if LIPM_model.support_leg is "left_leg":
+        if LIPM_model.support_leg == "left_leg":
             support_foot_pos = LIPM_model.left_foot_pos
             LIPM_model.p_x = LIPM_model.left_foot_pos[0]
             LIPM_model.p_y = LIPM_model.left_foot_pos[1]
@@ -253,7 +253,7 @@ for i in range(int(total_time / delta_t)):
             LIPM_model.T_sup
         )  # calculate the xt and yt as the initial state for next step
 
-        if LIPM_model.support_leg is "left_leg":
+        if LIPM_model.support_leg == "left_leg":
             x_0 = (
                 x_0 + LIPM_model.left_foot_pos[0]
             )  # need the absolute position for next step
@@ -274,7 +274,7 @@ for i in range(int(total_time / delta_t)):
         # print('p_star=', LIPM_model.p_x_star, LIPM_model.p_y_star)
 
         # calculate the foot positions for swing phase
-        if LIPM_model.support_leg is "left_leg":
+        if LIPM_model.support_leg == "left_leg":
             right_foot_target_pos = [LIPM_model.p_x_star, LIPM_model.p_y_star, 0]
             swing_foot_pos[:, 0] = np.linspace(
                 LIPM_model.right_foot_pos[0], right_foot_target_pos[0], swing_data_len
