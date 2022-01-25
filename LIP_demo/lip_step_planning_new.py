@@ -81,7 +81,7 @@ weight_margin = 5
 prog.AddCost(weight_margin * (0.425 - F[1]) ** 2)
 
 
-# Reference cost
+# Step/Velocity Reference cost
 prog.AddQuadraticErrorCost(
     Q=np.identity(6),
     x_desired=np.array(
