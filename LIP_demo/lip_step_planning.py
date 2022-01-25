@@ -40,9 +40,15 @@ F = prog.NewContinuousVariables(3, "Foot")
 p_init = x0 * np.cosh(half_tau) + Tc * v0 * np.sinh(half_tau)
 v_init = x0 / Tc * np.sinh(half_tau) + v0 * np.cosh(half_tau)
 
+# kinematics
 prog.AddConstraint(X[0] <= 0)
 prog.AddConstraint(X[1] <= 0)
 prog.AddConstraint(X[2] <= 0)
+prog.AddConstraint(X[0] >= -0.3)
+prog.AddConstraint(X[1] >= -0.3)
+prog.AddConstraint(X[2] >= -0.3)
+prog.AddConstraint(F[1] - F[0] + X[1] <= 0.3)
+prog.AddConstraint(F[2] - F[1] + X[2] <= 0.3)
 
 prog.AddConstraint(
     lambda z: np.array([z[0] * np.cosh(full_tau) + Tc * z[1] * np.sinh(full_tau)]),
@@ -122,6 +128,10 @@ prog.AddConstraint(F[1] <= 0.45)
 prog.AddConstraint(F[1] >= 0.40)
 
 # ADD cost
+
+# obstacle areas margin
+weight_margin = 5
+prog.AddCost(weight_margin * (0.425 - F[1]) ** 2)
 
 # close to reference step path
 prog.AddCost(
