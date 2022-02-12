@@ -49,3 +49,7 @@
 <p align="center">
   <img src="doc/annotate.jpg" width="500"/>
 </p>
+
+### References
+
+1. [地面分割：Fast Segmentation of 3D Point Clouds for Ground Vehicles](https://blog.csdn.net/lovelyaiq/article/details/118826534)
