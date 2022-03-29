@@ -1,0 +1,347 @@
+# -*- python -*-
+
+load("@drake//tools/install:install.bzl", "install")
+load(
+    "@drake//tools/skylark:pybind.bzl",
+    "add_pybind_coverage_data",
+    "drake_pybind_library",
+    "get_drake_py_installs",
+    "get_pybind_package_info",
+)
+load(
+    "@drake//tools/skylark:drake_py.bzl",
+    "drake_py_library",
+    "drake_py_unittest",
+)
+load(
+    "@drake//tools/skylark:alias.bzl",
+    "drake_py_library_aliases",
+)
+load("//bindings/pydrake:pydrake.bzl", "add_lint_tests_pydrake")
+load("//tools/jupyter:jupyter_py.bzl", "drake_jupyter_py_binary")
+
+package(default_visibility = [
+    "//bindings/pydrake:__subpackages__",
+])
+
+# This determines how `PYTHONPATH` is configured, and how to install the
+# bindings.
+PACKAGE_INFO = get_pybind_package_info("//bindings")
+
+drake_py_library(
+    name = "module_py",
+    srcs = ["__init__.py"],
+    imports = PACKAGE_INFO.py_imports,
+    deps = [
+        "//bindings/pydrake:module_py",
+    ],
+)
+
+drake_pybind_library(
+    name = "benchmarks_py",
+    cc_deps = ["//bindings/pydrake:documentation_pybind"],
+    cc_srcs = ["benchmarks_py.cc"],
+    package_info = PACKAGE_INFO,
+    py_deps = [
+        ":module_py",
+        ":plant_py",
+    ],
+)
+
+drake_py_library(
+    name = "jupyter_widgets_py",
+    srcs = ["jupyter_widgets.py"],
+    imports = PACKAGE_INFO.py_imports,
+    deps = [
+        ":module_py",
+        "//bindings/pydrake/common:jupyter_py",
+        "//bindings/pydrake/systems:framework_py",
+    ],
+)
+
+drake_pybind_library(
+    name = "math_py",
+    cc_deps = [
+        "//bindings/pydrake:documentation_pybind",
+        "//bindings/pydrake/common:cpp_template_pybind",
+        "//bindings/pydrake/common:default_scalars_pybind",
+        "//bindings/pydrake/common:deprecation_pybind",
+        "//bindings/pydrake/common:type_pack",
+        "//bindings/pydrake/common:value_pybind",
+    ],
+    cc_srcs = ["math_py.cc"],
+    package_info = PACKAGE_INFO,
+    py_deps = [
+        ":module_py",
+        "//bindings/pydrake/common:cpp_template_py",
+        "//bindings/pydrake/common:value_py",
+        "//bindings/pydrake:math_py",
+    ],
+)
+
+drake_pybind_library(
+    name = "tree_py",
+    cc_deps = [
+        "//bindings/pydrake:documentation_pybind",
+        "//bindings/pydrake/common:cpp_template_pybind",
+        "//bindings/pydrake/common:default_scalars_pybind",
+        "//bindings/pydrake/common:eigen_geometry_pybind",
+        "//bindings/pydrake/common:eigen_pybind",
+        "//bindings/pydrake/common:type_pack",
+        "//bindings/pydrake/common:type_safe_index_pybind",
+    ],
+    cc_srcs = ["tree_py.cc"],
+    package_info = PACKAGE_INFO,
+    py_deps = [
+        ":math_py",
+        ":module_py",
+        "//bindings/pydrake/common:eigen_geometry_py",
+        "//bindings/pydrake/systems:framework_py",
+    ],
+)
+
+drake_pybind_library(
+    name = "plant_py",
+    cc_deps = [
+        "//bindings/pydrake:documentation_pybind",
+        "//bindings/pydrake/common:cpp_template_pybind",
+        "//bindings/pydrake/common:default_scalars_pybind",
+        "//bindings/pydrake/common:eigen_geometry_pybind",
+        "//bindings/pydrake/common:eigen_pybind",
+        "//bindings/pydrake/common:type_pack",
+        "//bindings/pydrake/common:type_safe_index_pybind",
+        "//bindings/pydrake/common:value_pybind",
+    ],
+    cc_srcs = ["plant_py.cc"],
+    package_info = PACKAGE_INFO,
+    py_deps = [
+        ":math_py",
+        ":module_py",
+        ":tree_py",
+        "//bindings/pydrake:geometry_py",
+        "//bindings/pydrake/common:cpp_template_py",
+    ],
+    py_srcs = ["_plant_extra.py"],
+)
+
+drake_pybind_library(
+    name = "parsing_py",
+    cc_deps = [
+        "//bindings/pydrake:documentation_pybind",
+        "//bindings/pydrake/common:deprecation_pybind",
+    ],
+    cc_srcs = ["parsing_py.cc"],
+    package_info = PACKAGE_INFO,
+    py_deps = [
+        ":module_py",
+    ],
+)
+
+drake_pybind_library(
+    name = "meshcat_py",
+    cc_deps = [
+        "//bindings/pydrake:documentation_pybind",
+        "//bindings/pydrake/common:cpp_template_pybind",
+        "//bindings/pydrake/common:default_scalars_pybind",
+        "//bindings/pydrake/common:monostate_pybind",
+        "//bindings/pydrake/common:type_pack",
+    ],
+    cc_srcs = ["meshcat_py.cc"],
+    package_info = PACKAGE_INFO,
+    py_deps = [
+        ":module_py",
+        ":plant_py",
+    ],
+)
+
+drake_pybind_library(
+    name = "inverse_kinematics_py",
+    cc_deps = [
+        "//bindings/pydrake:documentation_pybind",
+        "//bindings/pydrake/common:default_scalars_pybind",
+        "//bindings/pydrake/common:sorted_pair_pybind",
+    ],
+    cc_srcs = ["inverse_kinematics_py.cc"],
+    package_info = PACKAGE_INFO,
+    py_deps = [
+        ":module_py",
+        ":plant_py",
+        "//bindings/pydrake/solvers:mathematicalprogram_py",
+    ],
+)
+
+drake_pybind_library(
+    name = "optimization_py",
+    cc_deps = [
+        "//bindings/pydrake:documentation_pybind",
+        "//bindings/pydrake/common:default_scalars_pybind",
+        "//bindings/pydrake/common:value_pybind",
+    ],
+    cc_srcs = ["optimization_py.cc"],
+    package_info = PACKAGE_INFO,
+    py_deps = [
+        ":module_py",
+        ":plant_py",
+        "//bindings/pydrake/solvers:mathematicalprogram_py",
+    ],
+)
+
+drake_jupyter_py_binary(
+    name = "examples/door_hinge_inspector",
+    add_test_rule = 1,
+    deps = [
+        ":plant_py",
+        ":tree_py",
+    ],
+)
+
+PY_LIBRARIES_WITH_INSTALL = [
+    ":benchmarks_py",
+    ":inverse_kinematics_py",
+    ":math_py",
+    ":meshcat_py",
+    ":optimization_py",
+    ":parsing_py",
+    ":plant_py",
+    ":tree_py",
+]
+
+PY_LIBRARIES = [
+    ":jupyter_widgets_py",
+    ":module_py",
+]
+
+# Symbol roll-up (for user ease).
+drake_py_library(
+    name = "all_py",
+    srcs = ["all.py"],
+    deps = PY_LIBRARIES_WITH_INSTALL + PY_LIBRARIES,
+)
+
+# Package roll-up (for Bazel dependencies).
+drake_py_library(
+    name = "multibody",
+    deps = [":all_py"],
+)
+
+install(
+    name = "install",
+    targets = PY_LIBRARIES + [":all_py"],
+    py_dest = PACKAGE_INFO.py_dest,
+    deps = get_drake_py_installs(PY_LIBRARIES_WITH_INSTALL),
+)
+
+filegroup(
+    name = "models",
+    srcs = glob([
+        "**/*.sdf",
+    ]),
+)
+
+drake_jupyter_py_binary(
+    name = "examples/jupyter_widgets_examples",
+    add_test_rule = 1,
+    data = [
+        "//manipulation/models/iiwa_description:models",
+    ],
+    deps = [
+        ":jupyter_widgets_py",
+        ":parsing_py",
+        ":plant_py",
+        "//bindings/pydrake:geometry_py",
+        "//bindings/pydrake/systems:analysis_py",
+        "//bindings/pydrake/systems:framework_py",
+        "//bindings/pydrake/systems:rendering_py",
+    ],
+)
+
+drake_py_unittest(
+    name = "parsing_test",
+    data = [
+        "//examples/atlas:models",
+        "//multibody/benchmarks/acrobot:models",
+        "//multibody/parsing:process_model_directives_test_models",
+        "//multibody/parsing:test_models",
+    ],
+    deps = [
+        ":parsing_py",
+        ":plant_py",
+        "//bindings/pydrake/common/test_utilities",
+    ],
+)
+
+drake_py_unittest(
+    name = "plant_test",
+    data = [
+        ":models",
+        "//manipulation/models/iiwa_description:models",
+        "//manipulation/models/wsg_50_description:models",
+        "//multibody/benchmarks/acrobot:models",
+        "//multibody/benchmarks/free_body:models",
+    ],
+    deps = [
+        ":benchmarks_py",
+        ":parsing_py",
+        ":plant_py",
+        ":tree_py",
+        "//bindings/pydrake/common/test_utilities:deprecation_py",
+        "//bindings/pydrake/common/test_utilities:numpy_compare_py",
+        "//bindings/pydrake/common/test_utilities:pickle_compare_py",
+        "//bindings/pydrake/systems:analysis_py",
+        "//bindings/pydrake/systems:scalar_conversion_py",
+        # TODO(jwnimmer-tri) Remove this on 2022-05-01 per deprecations.
+        ":meshcat_py",
+    ],
+)
+
+drake_py_unittest(
+    name = "math_test",
+    deps = [
+        ":math_py",
+        "//bindings/pydrake/common/test_utilities",
+    ],
+)
+
+drake_py_unittest(
+    name = "meshcat_test",
+    data = [
+        "//multibody/benchmarks/acrobot:models",
+    ],
+    deps = [
+        ":meshcat_py",
+        ":parsing_py",
+        "//bindings/pydrake/common/test_utilities:numpy_compare_py",
+    ],
+)
+
+drake_py_unittest(
+    name = "inverse_kinematics_test",
+    data = [
+        ":models",
+    ],
+    deps = [
+        ":benchmarks_py",
+        ":inverse_kinematics_py",
+        ":parsing_py",
+        "//bindings/pydrake/common/test_utilities",
+    ],
+)
+
+drake_py_unittest(
+    name = "optimization_test",
+    timeout = "moderate",
+    deps = [
+        ":benchmarks_py",
+        ":inverse_kinematics_py",
+        ":optimization_py",
+        ":parsing_py",
+        "//bindings/pydrake:trajectories_py",
+        "//bindings/pydrake/common/test_utilities",
+        "//bindings/pydrake/solvers:ipopt_py",
+        "//bindings/pydrake/solvers:snopt_py",
+    ],
+)
+
+add_pybind_coverage_data()
+
+add_lint_tests_pydrake()

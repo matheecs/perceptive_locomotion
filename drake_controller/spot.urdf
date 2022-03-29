@@ -14,6 +14,12 @@
         <color rgba="1 0.8431 0 1"/>
       </material>
     </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="link_models/base.obj"/>
+      </geometry>
+    </collision>
   </link>
   <link name="fl.hip">
     <inertial>
@@ -77,9 +83,9 @@
       </material>
     </visual>
     <collision>
-      <origin xyz="0.0 0.0 -0.34"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <sphere radius="0.01"/>
+        <mesh filename="link_models/fl.lleg.obj"/>
       </geometry>
     </collision>
   </link>
@@ -152,9 +158,9 @@
       </material>
     </visual>
     <collision>
-      <origin xyz="0.0 0.0 -0.34"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <sphere radius="0.01"/>
+        <mesh filename="link_models/fr.lleg.obj"/>
       </geometry>
     </collision>
   </link>
@@ -227,9 +233,9 @@
       </material>
     </visual>
     <collision>
-      <origin xyz="0.0 0.0 -0.34"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <sphere radius="0.01"/>
+        <mesh filename="link_models/hl.lleg.obj"/>
       </geometry>
     </collision>
   </link>
@@ -302,9 +308,9 @@
       </material>
     </visual>
     <collision>
-      <origin xyz="0.0 0.0 -0.34"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <sphere radius="0.01"/>
+        <mesh filename="link_models/hr.lleg.obj"/>
       </geometry>
     </collision>
   </link>

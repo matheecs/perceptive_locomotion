@@ -1,0 +1,87 @@
+# -*- python -*-
+
+load(
+    "@drake//tools/skylark:pybind.bzl",
+    "get_pybind_package_info",
+)
+load(
+    "@drake//tools/skylark:drake_py.bzl",
+    "drake_py_library",
+    "drake_py_unittest",
+)
+load("//bindings/pydrake:pydrake.bzl", "add_lint_tests_pydrake")
+
+package(default_visibility = [
+    "//bindings/pydrake:__subpackages__",
+])
+
+# This determines how `PYTHONPATH` is configured.
+PACKAGE_INFO = get_pybind_package_info("//bindings")
+
+drake_py_library(
+    name = "module_py",
+    testonly = 1,
+    srcs = ["__init__.py"],
+    imports = PACKAGE_INFO.py_imports,
+    deps = [
+        "//bindings/pydrake/common:module_py",
+    ],
+)
+
+drake_py_library(
+    name = "deprecation_py",
+    testonly = 1,
+    srcs = ["deprecation.py"],
+    deps = [":module_py"],
+)
+
+drake_py_library(
+    name = "meta_py",
+    testonly = 1,
+    srcs = ["meta.py"],
+    deps = [":module_py"],
+)
+
+drake_py_unittest(
+    name = "meta_test",
+    deps = [
+        ":meta_py",
+    ],
+)
+
+drake_py_library(
+    name = "numpy_compare_py",
+    testonly = 1,
+    srcs = ["numpy_compare.py"],
+    deps = [
+        ":module_py",
+        "//bindings/pydrake:autodiffutils_py",
+        "//bindings/pydrake:polynomial_py",
+        "//bindings/pydrake:symbolic_py",
+    ],
+)
+
+drake_py_library(
+    name = "pickle_compare_py",
+    testonly = 1,
+    srcs = ["pickle_compare.py"],
+    deps = [
+        ":module_py",
+        ":numpy_compare_py",
+        "//bindings/pydrake:symbolic_py",
+    ],
+)
+
+# Package roll-up (for Bazel dependencies).
+drake_py_library(
+    name = "test_utilities",
+    testonly = 1,
+    deps = [
+        ":deprecation_py",
+        ":module_py",
+        ":numpy_compare_py",
+        ":pickle_compare_py",
+    ],
+)
+
+add_lint_tests_pydrake()

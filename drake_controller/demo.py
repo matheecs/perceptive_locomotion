@@ -5,13 +5,14 @@ from pydrake.all import (
     AddMultibodyPlantSceneGraph,
     DiagramBuilder,
     Parser,
-    ConnectMeshcatVisualizer,
+    MeshcatVisualizer,
     RigidTransform,
     CoulombFriction,
     ConnectContactResultsToDrakeVisualizer,
     Simulator,
     PidController,
     HalfSpace,
+    MeshcatContactVisualizer,
 )
 from pydrake.systems.primitives import LogVectorOutput
 
@@ -63,9 +64,13 @@ plant.RegisterCollisionGeometry(
 plant.Finalize()
 
 # Add a PD Controller
-kp = 200.0 * np.ones(12)
-ki = 40.0 * np.ones(12)
-kd = 50.0 * np.ones(12)
+# kp = 200.0 * np.ones(12)
+# ki = 40.0 * np.ones(12)
+# kd = 50.0 * np.ones(12)
+
+kp = 0 * np.ones(12)
+ki = 0 * np.ones(12)
+kd = 0 * np.ones(12)
 # kd[-4:] = 0.16  # use lower gain for the knee joints
 # Select the joint states (and ignore the floating-base states)
 S = np.zeros((24, 37))
@@ -86,13 +91,24 @@ builder.Connect(
 )
 builder.Connect(pid_controller.get_output_port(), plant.get_actuation_input_port())
 
-meshcat_vis = ConnectMeshcatVisualizer(
-    builder, scene_graph=scene_graph, zmq_url="new", open_browser=True
+meshcat_vis = builder.AddSystem(
+    MeshcatVisualizer(scene_graph, zmq_url="new", open_browser=True)
+)
+builder.Connect(
+    scene_graph.get_query_output_port(), meshcat_vis.get_geometry_query_input_port()
 )
 
-ConnectContactResultsToDrakeVisualizer(
-    builder=builder, plant=plant, scene_graph=scene_graph
+contact_viz = builder.AddSystem(
+    MeshcatContactVisualizer(
+        meshcat_viz=meshcat_vis,
+        force_threshold=0,
+        contact_force_scale=1,
+        plant=plant,
+        contact_force_radius=0.005,
+    )
 )
+contact_input_port = contact_viz.GetInputPort("contact_results")
+builder.Connect(plant.GetOutputPort("contact_results"), contact_input_port)
 
 
 diagram = builder.Build()
@@ -114,7 +130,7 @@ meshcat_vis.reset_recording()
 meshcat_vis.start_recording()
 
 simulator.set_target_realtime_rate(1.0)
-simulator.AdvanceTo(5)
+simulator.AdvanceTo(2)
 
 meshcat_vis.stop_recording()
 meshcat_vis.publish_recording()
