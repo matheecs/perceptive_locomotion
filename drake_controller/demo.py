@@ -64,13 +64,13 @@ plant.RegisterCollisionGeometry(
 plant.Finalize()
 
 # Add a PD Controller
-# kp = 200.0 * np.ones(12)
-# ki = 40.0 * np.ones(12)
-# kd = 50.0 * np.ones(12)
+kp = 200.0 * np.ones(12)
+ki = 40.0 * np.ones(12)
+kd = 50.0 * np.ones(12)
 
-kp = 0 * np.ones(12)
-ki = 0 * np.ones(12)
-kd = 0 * np.ones(12)
+# kp = 0 * np.ones(12)
+# ki = 0 * np.ones(12)
+# kd = 0 * np.ones(12)
 # kd[-4:] = 0.16  # use lower gain for the knee joints
 # Select the joint states (and ignore the floating-base states)
 S = np.zeros((24, 37))
@@ -112,13 +112,14 @@ builder.Connect(plant.GetOutputPort("contact_results"), contact_input_port)
 
 
 diagram = builder.Build()
-plt.figure()
-plot_system_graphviz(diagram, max_depth=2)
-plt.show()
+# plt.figure()
+# plot_system_graphviz(diagram, max_depth=2)
+# plt.show()
 
 # Physical-based Simulation
 simulator = Simulator(diagram)
 context = simulator.get_mutable_context()
+print(context.get_time())
 plant_context = plant.GetMyContextFromRoot(context)
 set_home(plant, plant_context)
 x0 = S @ plant.get_state_output_port().Eval(plant_context)
@@ -132,7 +133,8 @@ meshcat_vis.reset_recording()
 meshcat_vis.start_recording()
 
 simulator.set_target_realtime_rate(1.0)
-simulator.AdvanceTo(2)
+simulator.AdvanceTo(1)
+print(context.get_time())
 
 meshcat_vis.stop_recording()
 meshcat_vis.publish_recording()
