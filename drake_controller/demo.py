@@ -112,9 +112,11 @@ builder.Connect(plant.GetOutputPort("contact_results"), contact_input_port)
 
 
 diagram = builder.Build()
+plt.figure()
+plot_system_graphviz(diagram, max_depth=2)
+plt.show()
 
-
-#
+# Physical-based Simulation
 simulator = Simulator(diagram)
 context = simulator.get_mutable_context()
 plant_context = plant.GetMyContextFromRoot(context)
