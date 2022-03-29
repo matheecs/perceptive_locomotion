@@ -22,6 +22,9 @@ print("Reference_steps_length: ", Reference_steps_length)
 
 
 # %%
+import time
+
+start_time = time.time()
 
 prog = MathematicalProgram()
 X = prog.NewContinuousVariables(32, "X")
@@ -203,6 +206,8 @@ def cost_Capture(z):
 
 prog.AddCost(cost_Capture, vars=X)
 
+print("--- Formulation %s seconds ---" % (time.time() - start_time))
+start_time = time.time()
 # %%
 # Initialization
 
@@ -231,6 +236,8 @@ prog.SetInitialGuess(X, x_init)
 
 # Solve
 result = Solve(prog)
+print("--- Solving %s seconds ---" % (time.time() - start_time))
+
 print("Success?", result.is_success())
 # print("X    =\n", result.GetSolution(X))
 # print("cost =  ", result.get_optimal_cost())
@@ -244,9 +251,9 @@ import matplotlib.pyplot as plt
 
 plt.figure()
 for i in [0, 2, 4, 6]:
-    plt.plot(X_sol[24 + i], X_sol[25 + i], "b*")
+    plt.plot(X_sol[24 + i], X_sol[25 + i], "kH")
 for i in [0, 2, 4, 6]:
-    plt.plot(X_sol[0 + i] + X_sol[24 + i], X_sol[1 + i] + X_sol[25 + i], "ro")
+    plt.plot(X_sol[0 + i] + X_sol[24 + i], X_sol[1 + i] + X_sol[25 + i], "bo")
 
 for x, y in zip(X_sol[24:31:2], X_sol[25:32:2]):
     label = "footstep"
