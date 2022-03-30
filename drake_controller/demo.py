@@ -19,6 +19,9 @@ from pydrake.systems.primitives import LogVectorOutput
 
 from matplotlib import pyplot as plt
 from pydrake.systems.drawing import plot_system_graphviz
+from BalanceController import BalanceController
+
+a = BalanceController()
 
 
 def set_home(plant, context):
@@ -138,4 +141,3 @@ print(context.get_time())
 
 meshcat_vis.stop_recording()
 meshcat_vis.publish_recording()
-meshcat_vis.vis.render_static()
