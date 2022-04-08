@@ -136,11 +136,11 @@ meshcat_vis.publish_recording()
 #     print("===")
 
 
-plt.figure()
-plot_system_graphviz(diagram, max_depth=2)
-plt.show()
+# plt.figure()
+# plot_system_graphviz(diagram, max_depth=2)
+# plt.show()
 
 print("Done.")
-import time
+# import time
 
-time.sleep(1e3)
+# time.sleep(1e3)

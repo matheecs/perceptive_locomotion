@@ -36,6 +36,9 @@ class BalanceController(LeafSystem):
 
     def calcTorqueOutput(self, context, output):
         if context.get_time() < 2.0:
+            """
+            Keep Standing Use PD
+            """
             q_v = self.GetInputPort("q_v_estimated_state").Eval(context)
             joint_q_v_des = self.GetInputPort("desired_joint_state").Eval(context)
             kp = 200
@@ -55,4 +58,9 @@ class BalanceController(LeafSystem):
             output_projection = self.plant.MakeActuationMatrix()[6:, :].T
             output.SetFromVector(output_projection @ pd)
         else:
+            """
+            Force Control & Swing Leg Control
+            References
+                Bledt, Gerardo, et al. "MIT Cheetah 3: Design and control of a robust, dynamic quadruped robot." 2018 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS). IEEE, 2018.
+            """
             output.SetFromVector(np.zeros(12))
