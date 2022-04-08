@@ -6,7 +6,7 @@ class BalanceController(LeafSystem):
     """
     Methods:
       0s-2s use PD controller
-      2s-8s use QP controller
+      2s-5s use QP controller
     q_v_estimated_state(37):
       qw,qx,qy,qz,body_x,body_y,body_z,joint_angle_{fl.hx->hr.kn} INDEX  0->18
       body_spatial_velocity,joint_angular_rate_{fl.hx->hr.kn}     INDEX 19->36
@@ -59,8 +59,29 @@ class BalanceController(LeafSystem):
             output.SetFromVector(output_projection @ pd)
         else:
             """
-            Force Control & Swing Leg Control
-            References
+            Force Control
+            References:
                 Bledt, Gerardo, et al. "MIT Cheetah 3: Design and control of a robust, dynamic quadruped robot." 2018 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS). IEEE, 2018.
             """
-            output.SetFromVector(np.zeros(12))
+            q_v = self.GetInputPort("q_v_estimated_state").Eval(context)
+            joint_q_v_des = self.GetInputPort("desired_joint_state").Eval(context)
+
+            joint_q_v_des[3:6] = np.array([0.0, 1.0, -2.0])
+            joint_q_v_des[6:9] = np.array([0.0, 1.0, -2.0])
+
+            kp = 200
+            kd = 50
+            state_projection = np.zeros((24, 37))
+            state_projection[:12, 7:19] = np.eye(12)
+            state_projection[12:, 25:] = np.eye(12)
+            joint_q_v = state_projection @ q_v
+
+            # print("q_v:", q_v)
+            # print("joint_q_v:", joint_q_v)
+
+            pd = kp * (joint_q_v_des[:12] - joint_q_v[:12]) + kd * (
+                joint_q_v_des[12:24] - joint_q_v[12:24]
+            )
+
+            output_projection = self.plant.MakeActuationMatrix()[6:, :].T
+            output.SetFromVector(output_projection @ pd)
