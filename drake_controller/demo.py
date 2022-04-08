@@ -7,6 +7,7 @@ from pydrake.all import (
     Parser,
     MeshcatVisualizer,
     RigidTransform,
+    SpatialVelocity,
     CoulombFriction,
     ConnectContactResultsToDrakeVisualizer,
     Simulator,
@@ -21,19 +22,17 @@ from matplotlib import pyplot as plt
 from pydrake.systems.drawing import plot_system_graphviz
 from BalanceController import BalanceController
 
-a = BalanceController()
-
 
 def set_home(plant, context):
     hip_x = 0.0
     hip_y = 0.4
     knee = -0.8
-    plant.GetJointByName("fr.hx").set_angle(context, hip_x)
-    plant.GetJointByName("fr.hy").set_angle(context, hip_y)
-    plant.GetJointByName("fr.kn").set_angle(context, knee)
     plant.GetJointByName("fl.hx").set_angle(context, hip_x)
     plant.GetJointByName("fl.hy").set_angle(context, hip_y)
     plant.GetJointByName("fl.kn").set_angle(context, knee)
+    plant.GetJointByName("fr.hx").set_angle(context, hip_x)
+    plant.GetJointByName("fr.hy").set_angle(context, hip_y)
+    plant.GetJointByName("fr.kn").set_angle(context, knee)
     plant.GetJointByName("hl.hx").set_angle(context, hip_x)
     plant.GetJointByName("hl.hy").set_angle(context, hip_y)
     plant.GetJointByName("hl.kn").set_angle(context, knee)
@@ -41,7 +40,7 @@ def set_home(plant, context):
     plant.GetJointByName("hr.hy").set_angle(context, hip_y)
     plant.GetJointByName("hr.kn").set_angle(context, knee)
     plant.SetFreeBodyPose(
-        context, plant.GetBodyByName("base"), RigidTransform([0, 0, 1.9])
+        context, plant.GetBodyByName("base"), RigidTransform([0, 0, 0.7])
     )
 
 
@@ -66,41 +65,9 @@ plant.RegisterCollisionGeometry(
 )
 plant.Finalize()
 
-# Add a PD Controller
-kp = 200.0 * np.ones(12)
-ki = 40.0 * np.ones(12)
-kd = 50.0 * np.ones(12)
-
-# kp = 0 * np.ones(12)
-# ki = 0 * np.ones(12)
-# kd = 0 * np.ones(12)
-# kd[-4:] = 0.16  # use lower gain for the knee joints
-# Select the joint states (and ignore the floating-base states)
-S = np.zeros((24, 37))
-S[:12, 7:19] = np.eye(12)
-S[12:, 25:] = np.eye(12)
-pid_controller = builder.AddSystem(
-    PidController(
-        kp=kp,
-        ki=ki,
-        kd=kd,
-        state_projection=S,
-        output_projection=plant.MakeActuationMatrix()[6:, :].T,
-    )
-)
-
-builder.Connect(
-    plant.get_state_output_port(), pid_controller.get_input_port_estimated_state()
-)
-builder.Connect(pid_controller.get_output_port(), plant.get_actuation_input_port())
-
 meshcat_vis = builder.AddSystem(
-    MeshcatVisualizer(scene_graph, zmq_url="new", open_browser=True)
+    MeshcatVisualizer(scene_graph, zmq_url="new", open_browser=False)
 )
-builder.Connect(
-    scene_graph.get_query_output_port(), meshcat_vis.get_geometry_query_input_port()
-)
-
 contact_viz = builder.AddSystem(
     MeshcatContactVisualizer(
         meshcat_viz=meshcat_vis,
@@ -110,34 +77,70 @@ contact_viz = builder.AddSystem(
         contact_force_radius=0.005,
     )
 )
-contact_input_port = contact_viz.GetInputPort("contact_results")
-builder.Connect(plant.GetOutputPort("contact_results"), contact_input_port)
+balance_controller = builder.AddSystem(BalanceController(plant))
 
-
+builder.Connect(plant.get_state_output_port(), balance_controller.get_input_port(0))
+builder.Connect(balance_controller.get_output_port(), plant.get_actuation_input_port())
+builder.Connect(
+    scene_graph.get_query_output_port(), meshcat_vis.get_geometry_query_input_port()
+)
+builder.Connect(
+    plant.GetOutputPort("contact_results"), contact_viz.GetInputPort("contact_results")
+)
 diagram = builder.Build()
-# plt.figure()
-# plot_system_graphviz(diagram, max_depth=2)
-# plt.show()
 
 # Physical-based Simulation
 simulator = Simulator(diagram)
 context = simulator.get_mutable_context()
-print(context.get_time())
 plant_context = plant.GetMyContextFromRoot(context)
+
 set_home(plant, plant_context)
-x0 = S @ plant.get_state_output_port().Eval(plant_context)
-pid_controller.get_input_port_desired_state().FixValue(
-    pid_controller.GetMyContextFromRoot(context), x0
+state_projection = np.zeros((24, 37))
+state_projection[:12, 7:19] = np.eye(12)
+state_projection[12:, 25:] = np.eye(12)
+x0 = state_projection @ plant.get_state_output_port().Eval(plant_context)
+balance_controller.get_input_port(1).FixValue(
+    balance_controller.GetMyContextFromRoot(context), x0
 )
 
+# print("x0 = ", x0)
 # print(context)
 
 meshcat_vis.reset_recording()
 meshcat_vis.start_recording()
-
 simulator.set_target_realtime_rate(1.0)
-simulator.AdvanceTo(1)
-print(context.get_time())
-
+simulator.AdvanceTo(8.0)
 meshcat_vis.stop_recording()
 meshcat_vis.publish_recording()
+
+# contact_viz_context = diagram.GetMutableSubsystemContext(contact_viz, context)
+# contact_results = contact_viz.EvalAbstractInput(
+#     contact_viz_context, contact_input_port.get_index()
+# ).get_value()
+# for i_contact in range(contact_results.num_point_pair_contacts()):
+#     contact_info = contact_results.point_pair_contact_info(i_contact)
+#     print(contact_info.contact_force())
+#     print(contact_info.contact_point())
+#     print(contact_info.bodyA_index())
+#     print(contact_info.bodyB_index())
+#     print("===")
+
+# print("************")
+# contact_results = plant.get_contact_results_output_port().Eval(plant_context)
+# for i_contact in range(contact_results.num_point_pair_contacts()):
+#     contact_info = contact_results.point_pair_contact_info(i_contact)
+#     print(contact_info.contact_force())
+#     print(contact_info.contact_point())
+#     print(contact_info.bodyA_index())
+#     print(contact_info.bodyB_index())
+#     print("===")
+
+
+plt.figure()
+plot_system_graphviz(diagram, max_depth=2)
+plt.show()
+
+print("Done.")
+import time
+
+time.sleep(1e3)
