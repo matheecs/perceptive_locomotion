@@ -136,10 +136,13 @@ class BalanceController(LeafSystem):
             wd_des = Kp_w @ (R_error_SO3.log().coeffs()) + Kd_w @ (w_des - w)
 
             # equation (3)
-            Ig = np.array([[0.0973333, 0, 0], [0, 1.02467, 0], [0, 0, 1.04493]])
+            I_b = np.array([[0.0973333, 0, 0], [0, 1.02467, 0], [0, 0, 1.04493]])
+            R_wb = RotationMatrix(Quaternion(wxyz=normalize(q_v_estimated[0:4])))
+            R_bw = R_wb.transpose()
+            I_w = (R_wb.multiply(I_b)) @ (R_bw.multiply(np.eye(3)))
             mass = 30
             g = 9.81
-            b_des = np.concatenate((mass * (pdd_com_des + [0, 0, g]), Ig @ wd_des))
+            b_des = np.concatenate((mass * (pdd_com_des + [0, 0, g]), I_w @ wd_des))
 
             # QP
             p_fl_foot = np.array([0.32254366, 0.16987541, 0.0])
