@@ -7,7 +7,6 @@ from pydrake.all import (
     RotationMatrix,
     MathematicalProgram,
     Solve,
-    CalcJacobianTranslationalVelocity,
 )
 from manifpy import SO3
 
@@ -186,7 +185,7 @@ class BalanceController(LeafSystem):
             print(f"optimal solution F in world: {result.GetSolution(F)}")
             self.F_prev = result.GetSolution(F)
 
-            #  equation (4) CalcJacobianTranslationalVelocity
+            #  equation (4)
 
             output.SetFromVector(output_projection @ pd)
             return
