@@ -7,6 +7,7 @@ from pydrake.all import (
     RotationMatrix,
     MathematicalProgram,
     Solve,
+    CalcJacobianTranslationalVelocity,
 )
 from manifpy import SO3
 
@@ -185,7 +186,7 @@ class BalanceController(LeafSystem):
             print(f"optimal solution F in world: {result.GetSolution(F)}")
             self.F_prev = result.GetSolution(F)
 
-            # Dynamic Locomotion in the MIT Cheetah 3 Through Convex Model-Predictive Control. equation (4)
+            #  equation (4) CalcJacobianTranslationalVelocity
 
             output.SetFromVector(output_projection @ pd)
             return
