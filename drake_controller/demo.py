@@ -109,7 +109,7 @@ balance_controller.get_input_port(1).FixValue(
 meshcat_vis.reset_recording()
 meshcat_vis.start_recording()
 simulator.set_target_realtime_rate(1.0)
-simulator.AdvanceTo(2.5)
+simulator.AdvanceTo(5.0)
 meshcat_vis.stop_recording()
 meshcat_vis.publish_recording()
 
