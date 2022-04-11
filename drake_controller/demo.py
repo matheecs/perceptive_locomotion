@@ -20,7 +20,9 @@ from pydrake.systems.primitives import LogVectorOutput
 
 from matplotlib import pyplot as plt
 from pydrake.systems.drawing import plot_system_graphviz
-from BalanceController import BalanceController
+
+# from trot import BalanceController
+from stand import BalanceController
 
 
 def set_home(plant, context):
@@ -55,7 +57,7 @@ plant.RegisterVisualGeometry(
     "GroundVisualGeometry",
     [0.5, 0.5, 0.5, 1.0],
 )
-plant.set_penetration_allowance(0.001)
+# plant.set_penetration_allowance(0.001)
 plant.RegisterCollisionGeometry(
     plant.world_body(),
     RigidTransform.Identity(),
@@ -109,7 +111,7 @@ balance_controller.get_input_port(1).FixValue(
 meshcat_vis.reset_recording()
 meshcat_vis.start_recording()
 simulator.set_target_realtime_rate(1.0)
-simulator.AdvanceTo(5.0)
+simulator.AdvanceTo(2.3)
 meshcat_vis.stop_recording()
 meshcat_vis.publish_recording()
 
@@ -125,15 +127,15 @@ meshcat_vis.publish_recording()
 #     print(contact_info.bodyB_index())
 #     print("===")
 
-# print("************")
-# contact_results = plant.get_contact_results_output_port().Eval(plant_context)
-# for i_contact in range(contact_results.num_point_pair_contacts()):
-#     contact_info = contact_results.point_pair_contact_info(i_contact)
-#     print(contact_info.contact_force())
-#     print(contact_info.contact_point())
-#     print(contact_info.bodyA_index())
-#     print(contact_info.bodyB_index())
-#     print("===")
+print("************")
+contact_results = plant.get_contact_results_output_port().Eval(plant_context)
+for i_contact in range(contact_results.num_point_pair_contacts()):
+    contact_info = contact_results.point_pair_contact_info(i_contact)
+    print(contact_info.contact_force())
+    print(contact_info.contact_point())
+    print(contact_info.bodyA_index())
+    print(contact_info.bodyB_index())
+    print("===")
 
 
 # plt.figure()

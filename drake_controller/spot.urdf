@@ -3,7 +3,7 @@
     <inertial>
       <mass value="16"/>
       <origin xyz="0.0 0.0 0.0"/>
-      <inertia ixx="0.0973333" ixy="0" ixz="0" iyy="1.02467" iyz="0" izz="1.04493"/>
+      <inertia ixx="0.026666666666666672" ixy="0" ixz="0" iyy="0.2266666666666667" iyz="0" izz="0.2266666666666667"/>
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -22,11 +22,11 @@
     </collision>
   </link>
   <link name="fl.hip">
-    <inertial>
+    <!-- <inertial>
       <mass value="2"/>
       <origin xyz="0.0 0.0 0.0"/>
       <inertia ixx="0.0027" ixy="0" ixz="0" iyy="0.00416667" iyz="0" izz="0.00416667"/>
-    </inertial>
+    </inertial> -->
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
@@ -45,11 +45,11 @@
     <limit effort="1000" velocity="1000.00" lower="-0.78539816339744827899" upper="0.78539816339744827899"/>
   </joint>
   <link name="fl.uleg">
-    <inertial>
+    <!-- <inertial>
       <mass value="1"/>
       <origin xyz="0.0 0.0 0.0"/>
       <inertia ixx="0.0155334" ixy="0" ixz="0" iyy="0.0155334" iyz="0" izz="0.000962667"/>
-    </inertial>
+    </inertial> -->
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
@@ -97,11 +97,11 @@
     <limit effort="1000" velocity="1000.00" lower="-2.7929" upper="-0.254402"/>
   </joint>
   <link name="fr.hip">
-    <inertial>
+    <!-- <inertial>
       <mass value="2"/>
       <origin xyz="0.0 0.0 0.0"/>
       <inertia ixx="0.0027" ixy="0" ixz="0" iyy="0.00416667" iyz="0" izz="0.00416667"/>
-    </inertial>
+    </inertial> -->
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
@@ -120,11 +120,11 @@
     <limit effort="1000" velocity="1000.00" lower="-0.78539816339744827899" upper="0.78539816339744827899"/>
   </joint>
   <link name="fr.uleg">
-    <inertial>
+    <!-- <inertial>
       <mass value="1"/>
       <origin xyz="0.0 0.0 0.0"/>
       <inertia ixx="0.0155334" ixy="0" ixz="0" iyy="0.0155334" iyz="0" izz="0.000962667"/>
-    </inertial>
+    </inertial> -->
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
@@ -172,11 +172,11 @@
     <limit effort="1000" velocity="1000.00" lower="-2.7929" upper="-0.255648"/>
   </joint>
   <link name="hl.hip">
-    <inertial>
+    <!-- <inertial>
       <mass value="2"/>
       <origin xyz="0.0 0.0 0.0"/>
       <inertia ixx="0.0027" ixy="0" ixz="0" iyy="0.00416667" iyz="0" izz="0.00416667"/>
-    </inertial>
+    </inertial> -->
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
@@ -195,11 +195,11 @@
     <limit effort="1000" velocity="1000.00" lower="-0.78539816339744827899" upper="0.78539816339744827899"/>
   </joint>
   <link name="hl.uleg">
-    <inertial>
+    <!-- <inertial>
       <mass value="1"/>
       <origin xyz="0.0 0.0 0.0"/>
       <inertia ixx="0.0155334" ixy="0" ixz="0" iyy="0.0155334" iyz="0" izz="0.000962667"/>
-    </inertial>
+    </inertial> -->
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
@@ -247,11 +247,11 @@
     <limit effort="1000" velocity="1000.00" lower="-2.7929" upper="-0.247067"/>
   </joint>
   <link name="hr.hip">
-    <inertial>
+    <!-- <inertial>
       <mass value="2"/>
       <origin xyz="0.0 0.0 0.0"/>
       <inertia ixx="0.0027" ixy="0" ixz="0" iyy="0.00416667" iyz="0" izz="0.00416667"/>
-    </inertial>
+    </inertial> -->
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
@@ -270,11 +270,11 @@
     <limit effort="1000" velocity="1000.00" lower="-0.78539816339744827899" upper="0.78539816339744827899"/>
   </joint>
   <link name="hr.uleg">
-    <inertial>
+    <!-- <inertial>
       <mass value="1"/>
       <origin xyz="0.0 0.0 0.0"/>
       <inertia ixx="0.0155334" ixy="0" ixz="0" iyy="0.0155334" iyz="0" izz="0.000962667"/>
-    </inertial>
+    </inertial> -->
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
